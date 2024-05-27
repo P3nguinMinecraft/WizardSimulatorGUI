@@ -1,5 +1,7 @@
 # WizardSimulatorGUI
-Roblox Wizard Simulator GUI (this is a cheat/exploit)
+## Roblox Wizard Simulator GUI (this is a cheat/exploit)
 
-I am not responsible for any actions caused by the use of this script.
-Developed on MacSploit (not affiliated)
+# I am not responsible for any actions caused by the use of this script.
+
+## Made by penguin586970
+### Developed on MacSploit (not affiliated)
