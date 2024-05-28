@@ -6,7 +6,7 @@
 
 # Script
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/LorekeeperZinnia/Dex/master/main.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/P3nguinMinecraft/WizardSimulatorGUI/main/wizardsimulatorgui.lua"))()
 ```
 
 ## Made by penguin586970
