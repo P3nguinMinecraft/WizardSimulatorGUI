@@ -3,6 +3,12 @@
 
 # I am not responsible for any actions caused by the use of this script.
 
+
+# Script
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/LorekeeperZinnia/Dex/master/main.lua"))()
+```
+
 ## Made by penguin586970
 ### Developed on MacSploit (not affiliated)
 
