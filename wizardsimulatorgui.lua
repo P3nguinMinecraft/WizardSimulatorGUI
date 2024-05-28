@@ -6,7 +6,7 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 -- local vars
 local Player = game:GetService("Players").LocalPlayer
-local Humanoid = Player.Character.Humanoid
+local Humanoid = Player.Character:WaitForChild("Humanoid")
 local Workspace = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
 local SelectedQuest = {"Default"}
@@ -16,29 +16,11 @@ local WalkspeedToggle = false
 local Walkspeed = 16
 local JumpPowerToggle = false
 local JumpPower = 50
-local toggle = false
+local HPot, MPot
 local HealthPercentage = Humanoid.Health / Humanoid.MaxHealth * 100
-
-
-
-spawn(function()
-   while wait(0.1) do
-      if WalkspeedToggleOld == true and WalkspeedToggle == false then
-         Humanoid.WalkSpeed = 16
-      end
-      if WalkspeedToggle then
-         Humanoid.WalkSpeed = Walkspeed
-      end
-      if JumpPowerToggleOld == true and JumpPowerToggle ==false then
-         Humanoid.JumpPower = 50
-      end
-      if JumpPowerToggle then
-         Humanoid.JumpPower = JumpPower
-      end
-      WalkspeedToggleOld = WalkspeedToggle
-      JumpPowerToggleOld = JumpPowerToggle
-   end
-end)
+local PreviousMana, Mana, MaxMana, ManaPercentage
+local AutoHealthToggle = false
+local AutoManaToggle = false
 
 
 local Window = Rayfield:CreateWindow({
@@ -46,7 +28,7 @@ local Window = Rayfield:CreateWindow({
    LoadingTitle = "Wizard Simulator GUI",
    LoadingSubtitle = "by penguin",
    ConfigurationSaving = {
-      Enabled = false,
+      Enabled = true,
       FolderName = "wizardsimulatorgui", -- Create a custom folder for your hub/game
       FileName = "wizardsimulator_config"
    },
@@ -147,12 +129,23 @@ local QuestParagraph2 = QuestTab:CreateParagraph({Title = "Auto Give", Content =
 
 local PotionTab = Window:CreateTab("Potion", nil) -- Title, Image
 
+local PotionParagraph1 = PotionTab:CreateParagraph({Title = "Potion Triggers", Content = "Click on the buttons to pick up a potion in the world (if avaliable) Use Auto Health/Mana to automatically pick up potions when it is most optimal (Health replenishes 25%, Mana Replenishes 30%)"})
+
 local PotionSection1 = PotionTab:CreateSection("Health")
 
 local PotionButton1 = PotionTab:CreateButton({
    Name = "Get Health Potion",
    Callback = function()
-      firetouchinterest(Player.HumanoidRootPart, Workspace.Effects.HealthPotion.HealthPotion.Forcefield.Touchinterest, 0)
+      if HPot then firetouchinterest(Humanoid.LeftLeg, HPot.Forcefield, 0) end
+   end,
+})
+
+local PotionToggle1 = PotionTab:CreateToggle({
+   Name = "Auto Health",
+   CurrentValue = false,
+   Flag = "PotionToggle1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Value)
+      AutoHealthToggle = Value
    end,
 })
 
@@ -163,9 +156,19 @@ local PotionSection2 = PotionTab:CreateSection("Mana")
 local PotionButton2 = PotionTab:CreateButton({
    Name = "Get Mana Potion",
    Callback = function()
-      firetouchinterest(Player.HumanoidRootPart, Workspace.Effects.HealthPotion, 0)
+      if MPot then firetouchinterest(Humanoid.LeftLeg, MPot.Forcefield, 0) end
    end,
 })
+
+local PotionToggle2 = PotionTab:CreateToggle({
+   Name = "Auto Mana",
+   CurrentValue = false,
+   Flag = "PotionToggle2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Value)
+      AutoManaToggle = Value
+   end,
+})
+
 
 
 local ToolTab = Window:CreateTab("Tools", nil) -- Title, Image
@@ -228,7 +231,7 @@ local ToolButton1 = ToolTab:CreateButton({
 local ToolButton2 = ToolTab:CreateButton({
    Name = "Remote Spy",
    Callback = function()
-      loadstring(game:HttpGet('https://pastebin.com/raw/9XQ49C5Y'))() -- Credit: SimpleSpy v2.2
+      loadstring(game:HttpGet("https://raw.githubusercontent.com/exxtremestuffs/SimpleSpySource/master/SimpleSpy.lua"))() -- Credit: SimpleSpy v3
    end,
 })
 
@@ -249,7 +252,7 @@ local ToolButton4 = ToolTab:CreateButton({
 local ToolButton5 = ToolTab:CreateButton({
    Name = "Dex",
    Callback = function()
-      loadstring(game:HttpGet("https://raw.githubusercontent.com/LorekeeperZinnia/Dex/master/main.lua"))() -- Credit: Dark Dex
+      loadstring(game:HttpGet('https://ithinkimandrew.site/scripts/tools/dark-dex.lua'))()
    end,
 })
 
@@ -266,9 +269,72 @@ UserInputService.InputBegan:Connect(function(input)
 end)
 
 
--- health detector
-local function DetectHealth()
-    HealthPercentage = Humanoid.Health / Humanoid.MaxHealth * 100
-end
+-- walkspeed and jumppower management
+spawn(function()
+   while wait(0.1) do
+      if WalkspeedToggleOld == true and WalkspeedToggle == false then
+         Humanoid.WalkSpeed = 16
+      end
+      if WalkspeedToggle then
+         Humanoid.WalkSpeed = Walkspeed
+      end
+      if JumpPowerToggleOld == true and JumpPowerToggle ==false then
+         Humanoid.JumpPower = 50
+      end
+      if JumpPowerToggle then
+         Humanoid.JumpPower = JumpPower
+      end
+      WalkspeedToggleOld = WalkspeedToggle
+      JumpPowerToggleOld = JumpPowerToggle
+   end
+end)
 
-Humanoid.HealthChanged:Connect(DetectHealth)
+
+-- health detector
+Humanoid.HealthChanged:Connect(function()
+    HealthPercentage = Humanoid.Health / Humanoid.MaxHealth * 100
+    print(HealthPercentage)
+end)
+
+
+-- mana detector
+spawn(function()
+   while wait(0.1) do
+      Mana = Player.Mana.value
+      MaxMana = Player.MaxMana.value
+      if PreviousMana ~= Mana then
+         ManaPercentage = Mana / MaxMana * 100
+         print(ManaPercentage)
+      end
+      PreviousMana = Mana
+   end
+end)
+
+
+-- auto potion loop
+spawn(function()
+   while wait(0.1) do
+      local success1 = pcall(function()
+         HPot = Workspace.Effects:FindFirstChild("HealthPotion")
+      end)
+      local success2 = pcall(function()
+         MPot = Workspace.Effects:FindFirstChild("ManaPotion")
+      end)
+      if HPot then
+         PotionButton1:Set("Get Health Potion - Avaliable")
+      else
+         PotionButton1:Set("Get Health Potion - Unavaliable")
+      end
+      if MPot then
+         PotionButton2:Set("Get Mana Potion - Avaliable")
+      else
+         PotionButton2:Set("Get Mana Potion - Unavaliable")
+      end
+      if AutoHealthToggle == true and HealthPercentage < 75 then
+         if HPot then firetouchinterest(Humanoid.LeftLeg, HPot.Forcefield, 0) end
+      end
+      if AutoManaToggle == true and ManaPercentage < 70 then
+         if MPot then firetouchinterest(Humanoid.LeftLeg, MPot.Forcefield, 0) end
+      end
+   end
+end)
