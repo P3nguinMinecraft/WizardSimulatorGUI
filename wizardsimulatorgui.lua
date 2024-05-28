@@ -21,6 +21,8 @@ local HealthPercentage = Humanoid.Health / Humanoid.MaxHealth * 100
 local PreviousMana, Mana, MaxMana, ManaPercentage
 local AutoHealthToggle = false
 local AutoManaToggle = false
+local AutoHealthThreshold = 0
+local AutoManaThreshold = 0
 
 
 local Window = Rayfield:CreateWindow({
@@ -149,6 +151,17 @@ local PotionToggle1 = PotionTab:CreateToggle({
    end,
 })
 
+local PotionSlider1 = PotionTab:CreateSlider({
+   Name = "Auto Health Threshold",
+   Range = {0, 100},
+   Increment = 1,
+   Suffix = "% HP",
+   CurrentValue = 50,
+   Flag = "PotionSlider1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Value)
+      AutoHealthThreshold = Value
+   end,
+})
 
 
 local PotionSection2 = PotionTab:CreateSection("Mana")
@@ -169,7 +182,17 @@ local PotionToggle2 = PotionTab:CreateToggle({
    end,
 })
 
-
+local PotionSlider2 = PotionTab:CreateSlider({
+   Name = "Auto mana Threshold",
+   Range = {0, 100},
+   Increment = 1,
+   Suffix = "% Mana",
+   CurrentValue = 70,
+   Flag = "PotionSlider2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Value)
+      AutoManaThreshold = Value
+   end,
+})
 
 local ToolTab = Window:CreateTab("Tools", nil) -- Title, Image
 
@@ -330,10 +353,10 @@ spawn(function()
       else
          PotionButton2:Set("Get Mana Potion - Unavaliable")
       end
-      if AutoHealthToggle == true and HealthPercentage < 50 then
+      if AutoHealthToggle == true and HealthPercentage < AutoHealthThreshold then
          if HPot then firetouchinterest(Humanoid.LeftLeg, HPot.Forcefield, 0) end
       end
-      if AutoManaToggle == true and ManaPercentage < 70 then
+      if AutoManaToggle == true and ManaPercentage < AutoManaThreshold then
          if MPot then firetouchinterest(Humanoid.LeftLeg, MPot.Forcefield, 0) end
       end
    end
