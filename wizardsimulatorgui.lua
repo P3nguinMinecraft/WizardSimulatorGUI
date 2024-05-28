@@ -129,7 +129,7 @@ local QuestParagraph2 = QuestTab:CreateParagraph({Title = "Auto Give", Content =
 
 local PotionTab = Window:CreateTab("Potion", nil) -- Title, Image
 
-local PotionParagraph1 = PotionTab:CreateParagraph({Title = "Potion Triggers", Content = "Click on the buttons to pick up a potion in the world (if avaliable) Use Auto Health/Mana to automatically pick up potions when it is most optimal (Health replenishes 25%, Mana Replenishes 30%)"})
+local PotionParagraph1 = PotionTab:CreateParagraph({Title = "Potion Triggers", Content = "Click on the buttons to pick up a potion in the world (if avaliable) Use Auto Health/Mana to automatically pick up potions when it is most optimal (Health replenishes 50%, Mana Replenishes 30%, Note that player-spawned health potions only replenish 25%)"})
 
 local PotionSection1 = PotionTab:CreateSection("Health")
 
@@ -330,7 +330,7 @@ spawn(function()
       else
          PotionButton2:Set("Get Mana Potion - Unavaliable")
       end
-      if AutoHealthToggle == true and HealthPercentage < 75 then
+      if AutoHealthToggle == true and HealthPercentage < 50 then
          if HPot then firetouchinterest(Humanoid.LeftLeg, HPot.Forcefield, 0) end
       end
       if AutoManaToggle == true and ManaPercentage < 70 then
