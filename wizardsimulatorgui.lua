@@ -131,7 +131,9 @@ local QuestParagraph2 = QuestTab:CreateParagraph({Title = "Auto Give", Content =
 
 local PotionTab = Window:CreateTab("Potion", nil) -- Title, Image
 
-local PotionParagraph1 = PotionTab:CreateParagraph({Title = "Potion Triggers", Content = "Click on the buttons to pick up a potion in the world (if avaliable) Use Auto Health/Mana to automatically pick up potions when value falls below threshold REPLENISH RATES : HP from Enemy - 50%, HP from spell - 25%, Mana - 30%"})
+local PotionParagraph1 = PotionTab:CreateParagraph({Title = "Potion Triggers", Content = "Click on the buttons to pick up a potion in the world (if avaliable) Use Auto Health/Mana to automatically pick up potions when value falls below threshold."})
+
+local PotionParagraph2 = PotionTab:CreateParagraph({Title = "Replenish Rates", Content = "HP from Enemy Kill: 50%, HP from Spell: 25%, Mana: 30%. Replenish rate of potions spawned from enemy kills are RELATIVE to the player who killed the enemy's MAX HP/MANA."})
 
 local PotionSection1 = PotionTab:CreateSection("Health")
 
