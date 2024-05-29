@@ -1,3 +1,5 @@
+-- Check out my GitHub! https://github.com/P3nguinMinecraft/WizardSimulatorGUI/
+
 print("[WSG] Loading Wizard Simulator GUI")
 
 
