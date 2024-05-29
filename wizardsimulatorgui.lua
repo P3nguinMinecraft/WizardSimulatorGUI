@@ -9,6 +9,7 @@ local Player = game:GetService("Players").LocalPlayer
 local Humanoid = Player.Character:WaitForChild("Humanoid")
 local Workspace = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
+local SpellState = 1
 local SelectedQuest = {"Default"}
 local AutoQuestToggle = false
 local WalkspeedToggleOld = false
@@ -23,6 +24,12 @@ local AutoHealthToggle = false
 local AutoManaToggle = false
 local AutoHealthThreshold = 0
 local AutoManaThreshold = 0
+local AutoFarm = false
+local AutoFarmQuest = false
+local AutoFarmEnemyName = "Dummy"
+local AutoFarmDelay = 1
+local AutoFarmToggle = false
+local SpellRange = 90
 
 
 local Window = Rayfield:CreateWindow({
@@ -117,7 +124,7 @@ local QuestButton2 = QuestTab:CreateButton({
 })
 
 local QuestToggle1 = QuestTab:CreateToggle({
-   Name = "Auto Give CJ:4 Quest",
+   Name = "Auto Give Quest",
    CurrentValue = false,
    Flag = "QuestToggle1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Value)
@@ -185,7 +192,7 @@ local PotionToggle2 = PotionTab:CreateToggle({
 })
 
 local PotionSlider2 = PotionTab:CreateSlider({
-   Name = "Auto mana Threshold",
+   Name = "Auto Mana Threshold",
    Range = {0, 100},
    Increment = 1,
    Suffix = "% Mana",
@@ -195,6 +202,73 @@ local PotionSlider2 = PotionTab:CreateSlider({
       AutoManaThreshold = Value
    end,
 })
+
+local AutoFarmTab = Window:CreateTab("Auto Farm", nil) -- Title, Image
+
+local AutoFarmParagraph1 = AutoFarmTab:CreateParagraph({Title = "Auto Farm Function", Content = "Automatically farms an enemy, targetting the closest one that is within range of the spell chosen. Configure other settings below."})
+
+local AutoFarmToggle1 = AutoFarmTab:CreateToggle({
+   Name = "Auto Farm Toggle",
+   CurrentValue = false,
+   Flag = "AutoFarmToggle1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Value)
+      AutoFarmToggle = Value
+   end,
+})
+
+local AutoFarmSection1 = AutoFarmTab:CreateSection("Settings")
+
+local AutoFarmDropdown1 = AutoFarmTab:CreateDropdown({
+   Name = "Enemy Selection",
+   Options = {"Dummy","nothing else yet"},
+   CurrentOption = {"Dummy"},
+   MultipleOptions = false,
+   Flag = "AutoFarmDropdown1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Option)
+      AutoFarmEnemyName = Option
+   end,
+})
+
+local AutoFarmParagraph2 = AutoFarmTab:CreateParagraph({Title = "Spell Delay", Content = "Spell Delay is the amount of time to cycle through ONE of your spells plus some room because of staff cast animation delay. However, you should have the same spell in BOTH SLOTS."})
+
+local AutoFarmSlider1 = AutoFarmTab:CreateSlider({
+   Name = "Spell Delay",
+   Range = {0, 10},
+   Increment = 0.1,
+   Suffix = "sec",
+   CurrentValue = 1,
+   Flag = "AutoFarmSlider1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Value)
+      AutoFarmDelay = Value
+   end,
+})
+
+local AutoFarmParagraph3 = AutoFarmTab:CreateParagraph({Title = "Spell Range", Content = "Spell Range is the range of a certain spell (in studs) required to be able to hit an enemy. Just guess and check because the algorithm targets the closest enemy. I might code a function to help you determine range, or just a list."})
+
+local AutoFarmSlider2 = AutoFarmTab:CreateSlider({
+   Name = "Spell Range",
+   Range = {0, 200},
+   Increment = 1,
+   Suffix = "studs",
+   CurrentValue = 100,
+   Flag = "AutoFarmSlider2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Value)
+      SpellRange = Value
+   end,
+})
+
+local AutoFarmParagraph4 = AutoFarmTab:CreateParagraph({Title = "Auto Farm Quest", Content = "This only auto gives the CJ:4 quest for when you auto farm Dummy. AFAIK this is the fastest grind method for XP and coins (correct me if I'm wrong) This is a replacement for Auto Give Quest (so turn it off). Fastest spell delay time is 2.2sec to make the quest register correctly."})
+
+local AutoFarmToggle2 = AutoFarmTab:CreateToggle({
+   Name = "Auto Farm Quest",
+   CurrentValue = false,
+   Flag = "AutoFarmToggle2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Value)
+      AutoFarmQuest = Value
+   end,
+})
+
+
 
 local ToolTab = Window:CreateTab("Tools", nil) -- Title, Image
 
@@ -329,7 +403,6 @@ spawn(function()
       MaxMana = Player.MaxMana.value
       if PreviousMana ~= Mana then
          ManaPercentage = Mana / MaxMana * 100
-         print(ManaPercentage)
       end
       PreviousMana = Mana
    end
@@ -360,6 +433,47 @@ spawn(function()
       end
       if AutoManaToggle == true and ManaPercentage < AutoManaThreshold then
          if MPot then firetouchinterest(Humanoid.LeftLeg, MPot.Forcefield, 0) end
+      end
+   end
+end)
+
+
+-- auto farm
+spawn(function()
+   while wait(AutoFarmDelay/2) do
+      local PlayerPos = Player.Character.PrimaryPart and Player.Character.PrimaryPart.Position
+      if PlayerPos and AutoFarmToggle then
+         local ClosestEnemy = nil
+         local ClosestDistance = math.huge -- big number go boom
+
+         -- Iterate through all folders inside the Levels folder
+         for i, LevelFolder in ipairs(game.Workspace.Levels:GetChildren()) do
+            local EnemiesFolder = LevelFolder:FindFirstChild("Enemies")
+            if EnemiesFolder then
+               for j, Enemy in ipairs(EnemiesFolder:GetChildren()) do
+                  if Enemy.Name == AutoFarmEnemyName then
+                     local EnemyPos = Enemy.PrimaryPart and Enemy.PrimaryPart.Position
+                     if EnemyPos then
+                        local Distance = (PlayerPos - EnemyPos).magnitude
+                        print("Distance to Enemy:", Distance)
+                        if Distance < ClosestDistance then
+                           ClosestEnemy = Enemy
+                           ClosestDistance = Distance
+                        end
+                     end
+                  end
+               end
+            end
+         end
+
+         if ClosestEnemy and ClosestDistance < SpellRange then
+            if AutoFarmQuest then
+               game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer("CJ:4")
+            end
+            game:GetService("ReplicatedStorage").Remote.CastSpell:FireServer(SpellState, ClosestEnemy)
+            SpellState = SpellState == 1 and 2 or 1 -- toggle between 1 and 2
+            print("Fired spell", SpellState, "at closest enemy")
+         end
       end
    end
 end)
