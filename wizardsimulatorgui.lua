@@ -1,4 +1,4 @@
-print("Loading Wizard Simulator GUI")
+print("[WSG] Loading Wizard Simulator GUI")
 
 
 getgenv().SecureMode = true
@@ -10,7 +10,7 @@ local Humanoid = Player.Character:WaitForChild("Humanoid")
 local Workspace = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
 local SpellState = 1
-local SelectedQuest = {"Default"}
+local SelectedQuest = "LJ:1"
 local AutoQuestToggle = false
 local WalkspeedToggleOld = false
 local WalkspeedToggle = false
@@ -27,10 +27,11 @@ local AutoManaThreshold = 0
 local AutoFarm = false
 local AutoFarmQuest = false
 local AutoFarmEnemyName = "Dummy"
-local AutoFarmDelay = 1
+local AutoFarmDelay = 2.2
 local AutoFarmToggle = false
-local SpellRange = 90
+local SpellRange = 100
 
+print("[WSG] Loading Window")
 
 local Window = Rayfield:CreateWindow({
    Name = "Wizard Simulator",
@@ -58,6 +59,8 @@ local Window = Rayfield:CreateWindow({
    }
 })
 
+print("[WSG] Loading Info Tab")
+
 local CreditTab = Window:CreateTab("Info", nil) -- Title, Image
 
 local CreditLabel1 = CreditTab:CreateLabel("Developed by penguin586970")
@@ -66,7 +69,7 @@ local CreditLabel2 = CreditTab:CreateLabel("Executor used: MacSploit (not affili
 
 local CreditLabel3 = CreditTab:CreateLabel("For questions, concerns, contact windows1267 on discord")
 
-
+print("[WSG] Loading Quest Tab")
 
 local QuestTab = Window:CreateTab("Quest", nil) -- Title, Image
 
@@ -89,7 +92,7 @@ local QuestDropdown1 = QuestTab:CreateDropdown({
    MultipleOptions = false,
    Flag = "QuestDropdown1",
    Callback = function(Option)
-      SelectedQuest = Option
+      SelectedQuest = Option[1]
    end,
 })
 
@@ -97,7 +100,7 @@ local QuestButton1 = QuestTab:CreateButton({
    Name = "Give Quest",
    Callback = function()
 if SelectedQuest[1] then
-         game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer(SelectedQuest[1])
+         game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer(SelectedQuest)
       else
          Rayfield:Notify({
             Title = "Error",
@@ -134,7 +137,7 @@ local QuestToggle1 = QuestTab:CreateToggle({
 
 local QuestParagraph2 = QuestTab:CreateParagraph({Title = "Auto Give", Content = "CJ:4 is Kill 1 Training Dummy (in Training World) but gives a ton of XP and Gold, useful for super fast progression in all game stages. Auto Give CJ:4 Quest function automatically gives you the quest whenever you press E or Q (assuming you one shot Dummies)."})
 
-
+print("[WSG] Loading Potion Tab")
 
 local PotionTab = Window:CreateTab("Potion", nil) -- Title, Image
 
@@ -203,6 +206,8 @@ local PotionSlider2 = PotionTab:CreateSlider({
    end,
 })
 
+print("[WSG] Loading Auto Farm Tab")
+
 local AutoFarmTab = Window:CreateTab("Auto Farm", nil) -- Title, Image
 
 local AutoFarmParagraph1 = AutoFarmTab:CreateParagraph({Title = "Auto Farm Function", Content = "Automatically farms an enemy, targetting the closest one that is within range of the spell chosen. Configure other settings below."})
@@ -220,12 +225,27 @@ local AutoFarmSection1 = AutoFarmTab:CreateSection("Settings")
 
 local AutoFarmDropdown1 = AutoFarmTab:CreateDropdown({
    Name = "Enemy Selection",
-   Options = {"Dummy","nothing else yet"},
+   Options = {
+      "Dummy","DummyWarrior","DummyArcher","DummySpearman","DummyWizard",
+      "GreenSlime","BigSlime","Spider","GiantSpider",
+      "Wolf","Werewolf","Bear",
+      "BeachCrab","RockCrab","Clam",
+      "Jellyfish","IceJellyfish",
+      "GreenPirate","RedPirate",
+      "MagmaSlime","GiantMagmaSlime",
+      "FireAnt","GiantFireAnt",
+      "MagmaCrab","MagmaSpider","MagmaScorpion","Worm",
+      "DummyKnight","DummyArcher2","DummySpearman2",
+      "SmallWasp","Wasp",
+      "SmallTreant","Treant",
+      "RockScorpion","RockTitan",
+      "SmallJello","Cupcake","Donut","BigJello","GummyWorm",
+      "GingerbreadSoldier","GingerbreadWizard"},
    CurrentOption = {"Dummy"},
    MultipleOptions = false,
    Flag = "AutoFarmDropdown1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Option)
-      AutoFarmEnemyName = Option
+      AutoFarmEnemyName = Option[1]
    end,
 })
 
@@ -236,7 +256,7 @@ local AutoFarmSlider1 = AutoFarmTab:CreateSlider({
    Range = {0, 10},
    Increment = 0.1,
    Suffix = "sec",
-   CurrentValue = 1,
+   CurrentValue = 2.2,
    Flag = "AutoFarmSlider1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Value)
       AutoFarmDelay = Value
@@ -268,7 +288,7 @@ local AutoFarmToggle2 = AutoFarmTab:CreateToggle({
    end,
 })
 
-
+print("[WSG] Loading Tools Tab")
 
 local ToolTab = Window:CreateTab("Tools", nil) -- Title, Image
 
@@ -355,8 +375,7 @@ local ToolButton5 = ToolTab:CreateButton({
    end,
 })
 
-print("Gui Loaded")
-
+print("[WSG] Loading Scripts")
 
 -- input detector
 UserInputService.InputBegan:Connect(function(input)
@@ -438,16 +457,16 @@ spawn(function()
 end)
 
 
--- auto farm
+-- autofarm
 spawn(function()
    while wait(AutoFarmDelay/2) do
       local PlayerPos = Player.Character.PrimaryPart and Player.Character.PrimaryPart.Position
       if PlayerPos and AutoFarmToggle then
+         local Distances = {}  
          local ClosestEnemy = nil
          local ClosestDistance = math.huge -- big number go boom
 
-         -- Iterate through all folders inside the Levels folder
-         for i, LevelFolder in ipairs(game.Workspace.Levels:GetChildren()) do
+         for i, LevelFolder in ipairs(Workspace.Levels:GetChildren()) do
             local EnemiesFolder = LevelFolder:FindFirstChild("Enemies")
             if EnemiesFolder then
                for j, Enemy in ipairs(EnemiesFolder:GetChildren()) do
@@ -455,7 +474,8 @@ spawn(function()
                      local EnemyPos = Enemy.PrimaryPart and Enemy.PrimaryPart.Position
                      if EnemyPos then
                         local Distance = (PlayerPos - EnemyPos).magnitude
-                        print("Distance to Enemy:", Distance)
+                        table.insert(Distances, Distance)
+
                         if Distance < ClosestDistance then
                            ClosestEnemy = Enemy
                            ClosestDistance = Distance
@@ -465,6 +485,10 @@ spawn(function()
                end
             end
          end
+         if (#Distances > 0) then
+            table.sort(Distances)
+            print("Distances to Enemies: \n", table.concat(Distances, "\n"))
+         end
 
          if ClosestEnemy and ClosestDistance < SpellRange then
             if AutoFarmQuest then
@@ -472,8 +496,9 @@ spawn(function()
             end
             game:GetService("ReplicatedStorage").Remote.CastSpell:FireServer(SpellState, ClosestEnemy)
             SpellState = SpellState == 1 and 2 or 1 -- toggle between 1 and 2
-            print("Fired spell", SpellState, "at closest enemy")
          end
       end
    end
 end)
+
+print("[WSG] Loaded!")
