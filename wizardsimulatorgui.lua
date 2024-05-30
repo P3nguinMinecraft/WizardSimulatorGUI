@@ -58,7 +58,7 @@ local Window = Rayfield:CreateWindow({
       FileName = "Key", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
       SaveKey = true, -- The user's key wiCH be saved, but if you change the key, they wiCH be unable to use your script
       GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
-      Key = {"HeCHo"} -- List of keys that wiCH be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("heCHo","key22")
+      Key = {"random"} -- List of keys that wiCH be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("heCHo","key22")
    }
 })
 
@@ -102,7 +102,7 @@ local QuestDropdown1 = QuestTab:CreateDropdown({
 local QuestButton1 = QuestTab:CreateButton({
    Name = "Give Quest",
    Callback = function()
-if SelectedQuest[1] then
+      if SelectedQuest then
          game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer(SelectedQuest)
       else
          Rayfield:Notify({
@@ -112,10 +112,38 @@ if SelectedQuest[1] then
             Image = nil,
             Actions = { -- Notification Buttons
                Ignore = {
-                  Name = "OK",
+                  Name = "Debug",
                   Callback = function()
-               end
-               },
+                  print('Selected Quest: ')
+                  print(SelectedQuest)
+               end},
+            },
+         })
+      end
+   end,
+})
+
+local QuestKeybind1 = QuestTab:CreateKeybind({
+   Name = "Keybind", 
+   CurrentKeybind = "nil",
+   HoldToInteract = false,
+   Flag = "QuestKeybind1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Keybind)
+      if SelectedQuest then
+            game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer(SelectedQuest)
+      else
+         Rayfield:Notify({
+            Title = "Error",
+            Content = "No quest selected! How did this happen?",
+            Duration = 5,
+            Image = nil,
+            Actions = { -- Notification Buttons
+               Ignore = {
+                  Name = "Debug",
+                  Callback = function()
+                  print('Selected Quest: ')
+                  print(SelectedQuest)
+               end},
             },
          })
       end
@@ -125,6 +153,16 @@ if SelectedQuest[1] then
 local QuestButton2 = QuestTab:CreateButton({
    Name = "Cancel Quest",
    Callback = function()
+      game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("CancelQuest"):FireServer()
+   end,
+})
+
+local QuestKeybind2 = QuestTab:CreateKeybind({
+   Name = "Keybind",
+   CurrentKeybind = "nil",
+   HoldToInteract = false,
+   Flag = "QuestKeybind2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Keybind)
       game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("CancelQuest"):FireServer()
    end,
 })
@@ -157,6 +195,16 @@ local PotionButton1 = PotionTab:CreateButton({
    end,
 })
 
+local PotionKeybind1 = PotionTab:CreateKeybind({
+   Name = "Keybind",
+   CurrentKeybind = "nil",
+   HoldToInteract = false,
+   Flag = "PotionKeybind1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Keybind)
+      if HPot then firetouchinterest(Humanoid.LeftLeg, HPot.Forcefield, 0) end
+   end,
+})
+
 local PotionToggle1 = PotionTab:CreateToggle({
    Name = "Auto Health",
    CurrentValue = false,
@@ -184,6 +232,16 @@ local PotionSection2 = PotionTab:CreateSection("Mana")
 local PotionButton2 = PotionTab:CreateButton({
    Name = "Get Mana Potion",
    Callback = function()
+      if MPot then firetouchinterest(Humanoid.LeftLeg, MPot.Forcefield, 0) end
+   end,
+})
+
+local PotionKeybind2 = PotionTab:CreateKeybind({
+   Name = "Keybind",
+   CurrentKeybind = "nil",
+   HoldToInteract = false,
+   Flag = "PotionKeybind2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Keybind)
       if MPot then firetouchinterest(Humanoid.LeftLeg, MPot.Forcefield, 0) end
    end,
 })
@@ -223,6 +281,18 @@ local AutoFarmToggle1 = AutoFarmTab:CreateToggle({
       AutoFarmToggle = Value
    end,
 })
+
+local AutoFarmKeybind1 = AutoFarmTab:CreateKeybind({
+   Name = "Keybind",
+   CurrentKeybind = "nil",
+   HoldToInteract = false,
+   Flag = "AutoFarmKeybind1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Keybind)
+      AutoFarmToggle = not AutoFarmToggle
+      AutoFarmToggle1:Set(AutoFarmToggle)
+   end,
+})
+
 
 local AutoFarmSection1 = AutoFarmTab:CreateSection("Settings")
 
@@ -387,6 +457,21 @@ local ToolButton5 = ToolTab:CreateButton({
    end,
 })
 
+print("[WSG] Loading Debug Tab")
+
+local DebugTab = Window:CreateTab("Debug", nil) -- Title, Image
+
+local DebugButton1 = DebugTab:CreateButton({
+   Name = "Reset All Keybinds",
+   Callback = function()
+      QuestKeybind1:Set("nil") -- Keybind (string)
+      QuestKeybind2:Set("nil") -- Keybind (string)
+      PotionKeybind1:Set("nil") -- Keybind (string)
+      PotionKeybind2:Set("nil") -- Keybind (string)
+      AutoFarmKeybind1:Set("nil") -- Keybind (string)
+   end,
+})
+
 print("[WSG] Loading Scripts")
 
 -- input detector
@@ -520,3 +605,4 @@ spawn(function()
 end)
 
 print("[WSG] Loaded!")
+givequest()
