@@ -516,6 +516,7 @@ end)
 spawn(function()
    while wait(0.1) do
       if AutoRechargeToggle == true and ManaPercentage < 90 then game:GetService("ReplicatedStorage").Remote.Recharge:FireServer() end
+   end
 end)
 
 print("[WSG] Loaded!")
