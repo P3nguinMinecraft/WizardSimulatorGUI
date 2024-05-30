@@ -489,7 +489,7 @@ spawn(function()
          end
          if (#Distances > 0) then
             table.sort(Distances)
-            print("Distances to Enemies: \n", table.concat(Distances, "\n"))
+            --print("Distances to Enemies:\n", table.concat(Distances, "\n"))
          end
 
          if ClosestEnemy and ClosestDistance < SpellRange then
