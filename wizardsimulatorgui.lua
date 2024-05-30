@@ -1,4 +1,5 @@
 -- Check out my GitHub! https://github.com/P3nguinMinecraft/WizardSimulatorGUI/
+-- game:GetService("Players").LocalPlayer.Character.PrimaryPart.Position = {898.3, 4, -399} works best with autofarm dummy so you won't be seen (using fly and noclip)
 
 print("[WSG] Loading Wizard Simulator GUI")
 
@@ -26,11 +27,11 @@ local AutoHealthToggle = false
 local AutoManaToggle = false
 local AutoHealthThreshold = 0
 local AutoManaThreshold = 0
-local AutoFarm = false
-local AutoFarmQuest = false
 local AutoFarmEnemyName = "Dummy"
 local AutoFarmDelay = 2.2
 local AutoFarmToggle = false
+local AutoFarmQuestToggle = false
+local AutoRechargeToggle = false
 local SpellRange = 100
 
 print("[WSG] Loading Window")
@@ -286,7 +287,16 @@ local AutoFarmToggle2 = AutoFarmTab:CreateToggle({
    CurrentValue = false,
    Flag = "AutoFarmToggle2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Value)
-      AutoFarmQuest = Value
+      AutoFarmQuestToggle = Value
+   end,
+})
+
+local AutoFarmToggle3 = AutoFarmTab:CreateToggle({
+   Name = "Auto Recharge at 90% (I think it requires gamepass)",
+   CurrentValue = false,
+   Flag = "AutoFarmToggle3", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Value)
+      AutoRechargeToggle = Value
    end,
 })
 
@@ -493,14 +503,19 @@ spawn(function()
          end
 
          if ClosestEnemy and ClosestDistance < SpellRange then
-            if AutoFarmQuest then
-               game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer("CJ:4")
-            end
+            if AutoFarmQuestToggle then game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer("CJ:4") end
             game:GetService("ReplicatedStorage").Remote.CastSpell:FireServer(SpellState, ClosestEnemy)
             SpellState = SpellState == 1 and 2 or 1 -- toggle between 1 and 2
          end
       end
    end
+end)
+
+
+-- auto recharge
+spawn(function()
+   while wait(0.1) do
+      if AutoRechargeToggle == true and ManaPercentage < 90 then game:GetService("ReplicatedStorage").Remote.Recharge:FireServer() end
 end)
 
 print("[WSG] Loaded!")
