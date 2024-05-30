@@ -108,6 +108,8 @@ local QOLInput1 = QOLTab:CreateInput({
 })
 
 
+
+
 print("[WSG] Loading Quest Tab")
 
 local QuestTab = Window:CreateTab("Quest", nil) -- Title, Image
@@ -161,7 +163,7 @@ local QuestButton1 = QuestTab:CreateButton({
 
 local QuestKeybind1 = QuestTab:CreateKeybind({
    Name = "Keybind", 
-   CurrentKeybind = "",
+   CurrentKeybind = "F",
    HoldToInteract = false,
    Flag = "QuestKeybind1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Keybind)
@@ -195,7 +197,7 @@ local QuestButton2 = QuestTab:CreateButton({
 
 local QuestKeybind2 = QuestTab:CreateKeybind({
    Name = "Keybind",
-   CurrentKeybind = "",
+   CurrentKeybind = "F",
    HoldToInteract = false,
    Flag = "QuestKeybind2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Keybind)
@@ -233,7 +235,7 @@ local PotionButton1 = PotionTab:CreateButton({
 
 local PotionKeybind1 = PotionTab:CreateKeybind({
    Name = "Keybind",
-   CurrentKeybind = "",
+   CurrentKeybind = "F",
    HoldToInteract = false,
    Flag = "PotionKeybind1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Keybind)
@@ -274,7 +276,7 @@ local PotionButton2 = PotionTab:CreateButton({
 
 local PotionKeybind2 = PotionTab:CreateKeybind({
    Name = "Keybind",
-   CurrentKeybind = "",
+   CurrentKeybind = "F",
    HoldToInteract = false,
    Flag = "PotionKeybind2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Keybind)
@@ -320,7 +322,7 @@ local AutoFarmToggle1 = AutoFarmTab:CreateToggle({
 
 local AutoFarmKeybind1 = AutoFarmTab:CreateKeybind({
    Name = "Keybind",
-   CurrentKeybind = "",
+   CurrentKeybind = "F",
    HoldToInteract = false,
    Flag = "AutoFarmKeybind1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Keybind)
@@ -508,11 +510,11 @@ local DebugTab = Window:CreateTab("Debug", nil) -- Title, Image
 local DebugButton1 = DebugTab:CreateButton({
    Name = "Reset All Keybinds",
    Callback = function()
-      QuestKeybind1:Set("") -- Keybind (string)
-      QuestKeybind2:Set("") -- Keybind (string)
-      PotionKeybind1:Set("") -- Keybind (string)
-      PotionKeybind2:Set("") -- Keybind (string)
-      AutoFarmKeybind1:Set("") -- Keybind (string)
+      QuestKeybind1:Set("F") -- Keybind (string)
+      QuestKeybind2:Set("F") -- Keybind (string)
+      PotionKeybind1:Set("F") -- Keybind (string)
+      PotionKeybind2:Set("F") -- Keybind (string)
+      AutoFarmKeybind1:Set("F") -- Keybind (string)
    end,
 })
 
@@ -649,4 +651,3 @@ spawn(function()
 end)
 
 print("[WSG] Loaded!")
-givequest()
