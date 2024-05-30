@@ -14,6 +14,13 @@ local Workspace = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
 local SpellState = 1
 local SelectedPet = 0
+local PetSlotOptions = {
+    [1] = "Main",
+    [2] = "Secondary (gamepass)",
+    [3] = "Mount"
+}
+local SelectedPetSlotName
+local SelectedPetSlot = 1
 local SelectedQuest = "LJ:1"
 local AutoQuestToggle = false
 local WalkspeedToggleOld = false
@@ -28,7 +35,7 @@ local AutoHealthToggle = false
 local AutoManaToggle = false
 local AutoHealthThreshold = 0
 local AutoManaThreshold = 0
-local AutoFarmEnemyName = "Dummy"
+local AutoFarmEnemyNames = {"Dummy"}
 local AutoFarmDelay = 2.2
 local AutoFarmToggle = false
 local AutoFarmQuestToggle = false
@@ -79,15 +86,15 @@ local QOLTab = Window:CreateTab("QOL", nil) -- Title, Image
 
 local QOLSection1 = QOLTab:CreateSection("Pets")
 
-local QOLParagraph1 = QOLTab:CreateParagraph({Title = "Select Pet", Content = "Enter the pet number, or the order of the pet when it appears in the pet menu"})
+local QOLParagraph1 = QOLTab:CreateParagraph({Title = "Select Pet", Content = "Enter the pet number, or the order of the pet when it appears in the pet menu. Enter 0 as the number to unequip the pet in that 'slot'."})
 
 local QOLInput1 = QOLTab:CreateInput({
    Name = "Pet Number",
    PlaceholderText = "Order in the Pet Menu",
    RemoveTextAfterFocusLost = false,
    Callback = function(Text)
-      if tonumber(Text) ~= nil and tonumber(Text) > 0 then
-         SelectedPet = Text
+      if tonumber(Text) ~= nil and tonumber(Text) >= 0 then
+         SelectedPet = tonumber(Text)
       else
          Rayfield:Notify({
             Title = "Error",
@@ -107,8 +114,50 @@ local QOLInput1 = QOLTab:CreateInput({
    end,
 })
 
+local QOLDropdown1 = QOLTab:CreateDropdown({
+   Name = "Pet Slot",
+   Options = PetSlotOptions,
+   CurrentOption = {PetSlotOptions[1]},
+   MultipleOptions = false,
+   Flag = "QOLDropdown1",
+   Callback = function(Option)
+      SelectedPetSlotName = Option[1]
+      for i, v in pairs(PetSlotOptions) do
+         if v == SelectedPetSlotName then
+            SelectedPetSlot = i
+            break
+         end
+      end
+   end,
+})
 
-
+local QOLButton1 = QOLTab:CreateButton({
+   Name = "Equip Pet",
+   Callback = function()
+      if SelectedPet and SelectedPetSlot then 
+         game:GetService("ReplicatedStorage").Remote.EquipPet:FireServer(SelectedPet,SelectedPetSlot)
+         print("Equipped pet # " .. SelectedPet .. " in slot " .. SelectedPetSlot)
+      else
+         Rayfield:Notify({
+            Title = "Error",
+            Content = "Pet Number or Pet Slot missing!",
+            Duration = 5,
+            Image = nil,
+            Actions = { -- Notification Buttons
+               Ignore = {
+                  Name = "Debug",
+                  Callback = function()
+                  print("SelectedPet:")
+                  print(SelectedPet)
+                  print("SelectedPetSlot:")
+                  print(SelectedPetSlot)
+               end
+            },
+         },
+         })
+      end
+   end,
+})
 
 print("[WSG] Loading Quest Tab")
 
@@ -331,7 +380,7 @@ local AutoFarmKeybind1 = AutoFarmTab:CreateKeybind({
       Rayfield:Notify({
          Title = "Auto Farm Keybind",
          Content = AutoFarmToggle,
-         Duration = 3,
+         Duration = 5,
          Image = nil,
          Actions = { -- Notification Buttons
          },
@@ -361,10 +410,10 @@ local AutoFarmDropdown1 = AutoFarmTab:CreateDropdown({
       "SmallJello","Cupcake","Donut","BigJello","GummyWorm",
       "GingerbreadSoldier","GingerbreadWizard"},
    CurrentOption = {"Dummy"},
-   MultipleOptions = false,
+   MultipleOptions = true,
    Flag = "AutoFarmDropdown1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Option)
-      AutoFarmEnemyName = Option[1]
+      AutoFarmEnemyNames = Option
    end,
 })
 
@@ -408,7 +457,7 @@ local AutoFarmToggle2 = AutoFarmTab:CreateToggle({
 })
 
 local AutoFarmToggle3 = AutoFarmTab:CreateToggle({
-   Name = "Auto Recharge at 90% (I think it requires gamepass)",
+   Name = "Auto Recharge at 30% (I think it requires gamepass)",
    CurrentValue = false,
    Flag = "AutoFarmToggle3", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Value)
@@ -605,36 +654,33 @@ spawn(function()
    while wait(AutoFarmDelay/2) do
       local PlayerPos = Player.Character.PrimaryPart and Player.Character.PrimaryPart.Position
       if PlayerPos and AutoFarmToggle then
-         local Distances = {}  
          local ClosestEnemy = nil
          local ClosestDistance = math.huge -- big number go boom
 
-         for i, LevelFolder in ipairs(Workspace.Levels:GetChildren()) do
-            local EnemiesFolder = LevelFolder:FindFirstChild("Enemies")
-            if EnemiesFolder then
-               for j, Enemy in ipairs(EnemiesFolder:GetChildren()) do
-                  if Enemy.Name == AutoFarmEnemyName then
-                     local EnemyPos = Enemy.PrimaryPart and Enemy.PrimaryPart.Position
-                     if EnemyPos then
-                        local Distance = (PlayerPos - EnemyPos).magnitude
-                        table.insert(Distances, Distance)
-
-                        if Distance < ClosestDistance then
-                           ClosestEnemy = Enemy
-                           ClosestDistance = Distance
+         for _, EnemyName in ipairs(AutoFarmEnemyNames) do
+            for _, LevelFolder in ipairs(Workspace.Levels:GetChildren()) do
+               local EnemiesFolder = LevelFolder:FindFirstChild("Enemies")
+               if EnemiesFolder then
+                  for _, Enemy in ipairs(EnemiesFolder:GetChildren()) do
+                     if Enemy.Name == EnemyName then
+                        local EnemyPos = Enemy.PrimaryPart and Enemy.PrimaryPart.Position
+                        if EnemyPos then
+                           local Distance = (PlayerPos - EnemyPos).magnitude
+                           if Distance < ClosestDistance then
+                              ClosestEnemy = Enemy
+                              ClosestDistance = Distance
+                           end
                         end
                      end
                   end
                end
             end
          end
-         if (#Distances > 0) then
-            table.sort(Distances)
-            --print("Distances to Enemies:\n", table.concat(Distances, "\n"))
-         end
 
          if ClosestEnemy and ClosestDistance < SpellRange then
-            if AutoFarmQuestToggle then game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer("CJ:4") end
+            if AutoFarmQuestToggle then 
+               game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer("CJ:4") 
+            end
             game:GetService("ReplicatedStorage").Remote.CastSpell:FireServer(SpellState, ClosestEnemy)
             SpellState = SpellState == 1 and 2 or 1 -- toggle between 1 and 2
          end
@@ -646,7 +692,7 @@ end)
 -- auto recharge
 spawn(function()
    while wait(0.1) do
-      if AutoRechargeToggle == true and ManaPercentage < 90 then game:GetService("ReplicatedStorage").Remote.Recharge:FireServer() end
+      if AutoRechargeToggle == true and ManaPercentage < 30 then game:GetService("ReplicatedStorage").Remote.Recharge:FireServer() end
    end
 end)
 
