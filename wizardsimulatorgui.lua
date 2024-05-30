@@ -13,6 +13,7 @@ local Humanoid = Player.Character:WaitForChild("Humanoid")
 local Workspace = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
 local SpellState = 1
+local SelectedPet = 0
 local SelectedQuest = "LJ:1"
 local AutoQuestToggle = false
 local WalkspeedToggleOld = false
@@ -72,6 +73,41 @@ local CreditLabel2 = CreditTab:CreateLabel("Executor used: MacSploit (not affili
 
 local CreditLabel3 = CreditTab:CreateLabel("For questions, concerns, contact windows1267 on discord")
 
+print("[WSG] Loading QOL Tab")
+
+local QOLTab = Window:CreateTab("QOL", nil) -- Title, Image
+
+local QOLSection1 = QOLTab:CreateSection("Pets")
+
+local QOLParagraph1 = QOLTab:CreateParagraph({Title = "Select Pet", Content = "Enter the pet number, or the order of the pet when it appears in the pet menu"})
+
+local QOLInput1 = QOLTab:CreateInput({
+   Name = "Pet Number",
+   PlaceholderText = "Order in the Pet Menu",
+   RemoveTextAfterFocusLost = false,
+   Callback = function(Text)
+      if tonumber(Text) ~= nil and tonumber(Text) > 0 then
+         SelectedPet = Text
+      else
+         Rayfield:Notify({
+            Title = "Error",
+            Content = "Has to be a positive integer",
+            Duration = 5,
+            Image = nil,
+            Actions = { -- Notification Buttons
+               Ignore = {
+                  Name = "Debug",
+                  Callback = function()
+                  print("Inputted Text is:")
+                  print(Text)
+               end},
+            },
+         })
+      end
+   end,
+})
+
+
 print("[WSG] Loading Quest Tab")
 
 local QuestTab = Window:CreateTab("Quest", nil) -- Title, Image
@@ -125,7 +161,7 @@ local QuestButton1 = QuestTab:CreateButton({
 
 local QuestKeybind1 = QuestTab:CreateKeybind({
    Name = "Keybind", 
-   CurrentKeybind = "nil",
+   CurrentKeybind = "",
    HoldToInteract = false,
    Flag = "QuestKeybind1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Keybind)
@@ -159,7 +195,7 @@ local QuestButton2 = QuestTab:CreateButton({
 
 local QuestKeybind2 = QuestTab:CreateKeybind({
    Name = "Keybind",
-   CurrentKeybind = "nil",
+   CurrentKeybind = "",
    HoldToInteract = false,
    Flag = "QuestKeybind2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Keybind)
@@ -197,7 +233,7 @@ local PotionButton1 = PotionTab:CreateButton({
 
 local PotionKeybind1 = PotionTab:CreateKeybind({
    Name = "Keybind",
-   CurrentKeybind = "nil",
+   CurrentKeybind = "",
    HoldToInteract = false,
    Flag = "PotionKeybind1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Keybind)
@@ -238,7 +274,7 @@ local PotionButton2 = PotionTab:CreateButton({
 
 local PotionKeybind2 = PotionTab:CreateKeybind({
    Name = "Keybind",
-   CurrentKeybind = "nil",
+   CurrentKeybind = "",
    HoldToInteract = false,
    Flag = "PotionKeybind2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Keybind)
@@ -284,12 +320,20 @@ local AutoFarmToggle1 = AutoFarmTab:CreateToggle({
 
 local AutoFarmKeybind1 = AutoFarmTab:CreateKeybind({
    Name = "Keybind",
-   CurrentKeybind = "nil",
+   CurrentKeybind = "",
    HoldToInteract = false,
    Flag = "AutoFarmKeybind1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Keybind)
       AutoFarmToggle = not AutoFarmToggle
       AutoFarmToggle1:Set(AutoFarmToggle)
+      Rayfield:Notify({
+         Title = "Auto Farm Keybind",
+         Content = AutoFarmToggle,
+         Duration = 3,
+         Image = nil,
+         Actions = { -- Notification Buttons
+         },
+      })
    end,
 })
 
@@ -464,11 +508,11 @@ local DebugTab = Window:CreateTab("Debug", nil) -- Title, Image
 local DebugButton1 = DebugTab:CreateButton({
    Name = "Reset All Keybinds",
    Callback = function()
-      QuestKeybind1:Set("nil") -- Keybind (string)
-      QuestKeybind2:Set("nil") -- Keybind (string)
-      PotionKeybind1:Set("nil") -- Keybind (string)
-      PotionKeybind2:Set("nil") -- Keybind (string)
-      AutoFarmKeybind1:Set("nil") -- Keybind (string)
+      QuestKeybind1:Set("") -- Keybind (string)
+      QuestKeybind2:Set("") -- Keybind (string)
+      PotionKeybind1:Set("") -- Keybind (string)
+      PotionKeybind2:Set("") -- Keybind (string)
+      AutoFarmKeybind1:Set("") -- Keybind (string)
    end,
 })
 
