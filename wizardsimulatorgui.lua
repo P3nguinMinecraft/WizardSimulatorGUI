@@ -50,9 +50,10 @@ local AutoHealthToggle = false
 local AutoManaToggle = false
 local AutoHealthThreshold = 0
 local AutoManaThreshold = 0
-local AutoFarmEnemyNames = {"Dummy"}
-local AutoFarmDelay = 2.2
 local AutoFarmToggle = false
+local AutoFarmEnemyNames = {"Dummy"}
+local AutoFarmTarget = "Closest"
+local AutoFarmDelay = 2.2
 local AutoFarmQuestToggle = false
 local AutoRechargeToggle = false
 local SpellRange = 100
@@ -510,12 +511,24 @@ local AutoFarmDropdown1 = AutoFarmTab:CreateDropdown({
       "SmallTreant","Treant",
       "RockScorpion","RockTitan",
       "SmallJello","Cupcake","Donut","BigJello","GummyWorm",
-      "GingerbreadSoldier","GingerbreadWizard"},
+      "GingerbreadSoldier","GingerbreadWizard",
+      "CandyGolem","CandyMuncher"},
    CurrentOption = {"Dummy"},
    MultipleOptions = true,
    Flag = "AutoFarmDropdown1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Option)
       AutoFarmEnemyNames = Option
+   end,
+})
+
+local AutoFarmDropdown2 = AutoFarmTab:CreateDropdown({
+   Name = "Target Method",
+   Options = {"Closest","Farthest","Never Hit"},
+   CurrentOption = {"Closest"},
+   MultipleOptions = false,
+   Flag = "AutoFarmDropdown2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Option)
+      AutoFarmTarget = Option[1]
    end,
 })
 
@@ -756,10 +769,12 @@ spawn(function()
    while wait(AutoFarmDelay/2) do
       local PlayerPos = Player.Character.PrimaryPart and Player.Character.PrimaryPart.Position
       if PlayerPos and AutoFarmToggle then
-         local ClosestEnemy = nil
-         local ClosestDistance = math.huge -- big number go boom
-         -- search levels
+         local TargetEnemy = nil
+         local TargetDistance = AutoFarmTarget == "Closest" and math.huge or 0 -- if targetting closest targetdistance is big number,
+         local SeenEnemies = {} -- Keep track of enemies seen before
          for _, EnemyName in ipairs(AutoFarmEnemyNames) do
+
+            -- Search levels
             for _, LevelFolder in ipairs(Workspace.Levels:GetChildren()) do
                local LevelEnemiesFolder = LevelFolder:FindFirstChild("Enemies")
                if LevelEnemiesFolder then
@@ -768,16 +783,31 @@ spawn(function()
                         local EnemyPos = Enemy.PrimaryPart and Enemy.PrimaryPart.Position
                         if EnemyPos then
                            local Distance = (PlayerPos - EnemyPos).magnitude
-                           if Distance < ClosestDistance then
-                              ClosestEnemy = Enemy
-                              ClosestDistance = Distance
+                           -- Check target method and update accordingly
+                           if AutoFarmTarget == "Closest" then
+                              if Distance < TargetDistance then
+                                 TargetEnemy = Enemy
+                                 TargetDistance = Distance
+                              end
+                           elseif AutoFarmTarget == "Farthest" then
+                              if Distance > TargetDistance then
+                                 TargetEnemy = Enemy
+                                 TargetDistance = Distance
+                              end
+                           elseif AutoFarmTarget == "NotHitBefore" then
+                              if not SeenEnemies[Enemy] then
+                                 TargetEnemy = Enemy
+                                 TargetDistance = Distance
+                                 SeenEnemies[Enemy] = true
+                              end
                            end
                         end
                      end
                   end
                end
             end
-            -- search bossrenas
+
+            -- Search boss arenas
             for _, BossArenaFolder in ipairs(Workspace.BossArenas:GetChildren()) do
                local BossArenaEnemiesFolder = BossArenaFolder:FindFirstChild("Enemies")
                if BossArenaEnemiesFolder then
@@ -786,9 +816,23 @@ spawn(function()
                         local EnemyPos = Enemy.PrimaryPart and Enemy.PrimaryPart.Position
                         if EnemyPos then
                            local Distance = (PlayerPos - EnemyPos).magnitude
-                           if Distance < ClosestDistance then
-                              ClosestEnemy = Enemy
-                              ClosestDistance = Distance
+                           -- Check target method and update accordingly
+                           if AutoFarmTarget == "Closest" then
+                              if Distance < TargetDistance and Distance < SpellRange then
+                                 TargetEnemy = Enemy
+                                 TargetDistance = Distance
+                              end
+                           elseif AutoFarmTarget == "Farthest" then
+                              if Distance > TargetDistance and Distance < SpellRange then
+                                 TargetEnemy = Enemy
+                                 TargetDistance = Distance
+                              end
+                           elseif AutoFarmTarget == "NotHitBefore" then
+                              if not SeenEnemies[Enemy] and Distance < SpellRange then
+                                 TargetEnemy = Enemy
+                                 TargetDistance = Distance
+                                 SeenEnemies[Enemy] = true
+                              end
                            end
                         end
                      end
@@ -797,24 +841,24 @@ spawn(function()
             end
          end
 
-         -- target the closest enemy if within spell range
-         if ClosestEnemy and ClosestDistance < SpellRange then
+         -- check if enemy is dead
+         if TargetEnemy then
+            if not TargetEnemy.Parent then
+               SeenEnemies[TargetEnemy] = nil -- Remove the enemy from the SeenEnemies list
+            end
+
+         -- perform attack
+         if TargetEnemy and TargetDistance < SpellRange then
             if AutoFarmQuestToggle then 
                game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer("CJ:4") 
             end
-            game:GetService("ReplicatedStorage").Remote.CastSpell:FireServer(SpellState, ClosestEnemy)
+            game:GetService("ReplicatedStorage").Remote.CastSpell:FireServer(SpellState, TargetEnemy)
             SpellState = SpellState == 1 and 2 or 1 -- toggle between 1 and 2
          end
+
       end
    end
 end)
-
--- Function to determine if an enemy should be targeted
-function ShouldTargetEnemy(enemy)
-   -- Add any conditions for targeting here
-   return enemy and enemy:IsA("Model") -- Example condition: check if the enemy is a model
-end
-
 
 
 -- auto recharge
