@@ -504,7 +504,7 @@ local AutoFarmDropdown1 = AutoFarmTab:CreateDropdown({
       "MagmaSlime","GiantMagmaSlime",
       "FireAnt","GiantFireAnt",
       "MagmaCrab","MagmaSpider","MagmaScorpion","Worm",
-      "MagmaGolem","Stone2","MagmaKing","MagmaEater"
+      "MagmaGolem","Stone2","MagmaKing","MagmaEater",
       "DummyKnight","DummyArcher2","DummySpearman2",
       "SmallWasp","Wasp",
       "SmallTreant","Treant",
