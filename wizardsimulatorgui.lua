@@ -754,12 +754,30 @@ spawn(function()
       if PlayerPos and AutoFarmToggle then
          local ClosestEnemy = nil
          local ClosestDistance = math.huge -- big number go boom
-
+         -- search levels
          for _, EnemyName in ipairs(AutoFarmEnemyNames) do
             for _, LevelFolder in ipairs(Workspace.Levels:GetChildren()) do
-               local EnemiesFolder = LevelFolder:FindFirstChild("Enemies")
-               if EnemiesFolder then
-                  for _, Enemy in ipairs(EnemiesFolder:GetChildren()) do
+               local LevelEnemiesFolder = LevelFolder:FindFirstChild("Enemies")
+               if LevelEnemiesFolder then
+                  for _, Enemy in ipairs(LevelEnemiesFolder:GetChildren()) do
+                     if Enemy.Name == EnemyName then
+                        local EnemyPos = Enemy.PrimaryPart and Enemy.PrimaryPart.Position
+                        if EnemyPos then
+                           local Distance = (PlayerPos - EnemyPos).magnitude
+                           if Distance < ClosestDistance then
+                              ClosestEnemy = Enemy
+                              ClosestDistance = Distance
+                           end
+                        end
+                     end
+                  end
+               end
+            end
+            -- search bossrenas
+            for _, BossArenaFolder in ipairs(Workspace.BossArenas:GetChildren()) do
+               local BossArenaEnemiesFolder = BossArenaFolder:FindFirstChild("Enemies")
+               if BossArenaEnemiesFolder then
+                  for _, Enemy in ipairs(BossArenaEnemiesFolder:GetChildren()) do
                      if Enemy.Name == EnemyName then
                         local EnemyPos = Enemy.PrimaryPart and Enemy.PrimaryPart.Position
                         if EnemyPos then
@@ -775,6 +793,7 @@ spawn(function()
             end
          end
 
+         -- target the closest enemy if within spell range
          if ClosestEnemy and ClosestDistance < SpellRange then
             if AutoFarmQuestToggle then 
                game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer("CJ:4") 
@@ -785,6 +804,13 @@ spawn(function()
       end
    end
 end)
+
+-- Function to determine if an enemy should be targeted
+function ShouldTargetEnemy(enemy)
+   -- Add any conditions for targeting here
+   return enemy and enemy:IsA("Model") -- Example condition: check if the enemy is a model
+end
+
 
 
 -- auto recharge
