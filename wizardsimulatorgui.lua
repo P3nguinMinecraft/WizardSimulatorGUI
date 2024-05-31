@@ -15,12 +15,27 @@ local UserInputService = game:GetService("UserInputService")
 local SpellState = 1
 local SelectedPet = 0
 local PetSlotOptions = {
-    [1] = "Main",
-    [2] = "Secondary (gamepass)",
-    [3] = "Mount"
+   [1] = "Main",
+   [2] = "Secondary (gamepass)",
+   [3] = "Mount"
 }
 local SelectedPetSlotName
 local SelectedPetSlot = 1
+local DeletePetLock = false
+local DeletePetLockOld = false
+local ChestOptions = {
+   ["Chest1"] = "Training Area Chest",
+   ["Chest2"] = "Werewolf Chest",
+   ["Chest3"] = "Deep Seas Chest",
+   ["Chest4"] = "Magma Chest",
+   ["Chest5"] = "Castle Chest",
+   ["Chest6"] = "Candy Chest",
+   ["CheapMountChest"] = "Cheap Mount Chest",
+   ["MountChest"] = "Mount Chest"
+}
+local SelectedChestName
+local SelectedChest = "Chest1"
+local AutoRerollToggle = false
 local SelectedQuest = "LJ:1"
 local AutoQuestToggle = false
 local WalkspeedToggleOld = false
@@ -86,14 +101,12 @@ local QOLTab = Window:CreateTab("QOL", nil) -- Title, Image
 
 local QOLSection1 = QOLTab:CreateSection("Pets")
 
-local QOLParagraph1 = QOLTab:CreateParagraph({Title = "Select Pet", Content = "Enter the pet number, or the order of the pet when it appears in the pet menu. Enter 0 as the number to unequip the pet in that 'slot'."})
-
 local QOLInput1 = QOLTab:CreateInput({
-   Name = "Pet Number",
+   Name = "Select Pet",
    PlaceholderText = "Order in the Pet Menu",
    RemoveTextAfterFocusLost = false,
    Callback = function(Text)
-      if tonumber(Text) ~= nil and tonumber(Text) >= 0 then
+      if tonumber(Text) ~= nil and tonumber(Text) > 0 then
          SelectedPet = tonumber(Text)
       else
          Rayfield:Notify({
@@ -105,19 +118,22 @@ local QOLInput1 = QOLTab:CreateInput({
                Ignore = {
                   Name = "Debug",
                   Callback = function()
-                  print("Inputted Text is:")
-                  print(Text)
-               end},
+                     print("Inputted Text is:")
+                     print(Text)
+                  end
+               },
             },
          })
       end
    end,
 })
 
+local QOLParagraph1 = QOLTab:CreateParagraph({Title = "Equip/Unequip Pets", Content = "Enter the pet number, or the order of the pet when it appears in the pet menu."})
+
 local QOLDropdown1 = QOLTab:CreateDropdown({
    Name = "Pet Slot",
    Options = PetSlotOptions,
-   CurrentOption = {PetSlotOptions[1]},
+   CurrentOption = PetSlotOptions[1],
    MultipleOptions = false,
    Flag = "QOLDropdown1",
    Callback = function(Option)
@@ -136,7 +152,6 @@ local QOLButton1 = QOLTab:CreateButton({
    Callback = function()
       if SelectedPet and SelectedPetSlot then 
          game:GetService("ReplicatedStorage").Remote.EquipPet:FireServer(SelectedPet,SelectedPetSlot)
-         print("Equipped pet # " .. SelectedPet .. " in slot " .. SelectedPetSlot)
       else
          Rayfield:Notify({
             Title = "Error",
@@ -147,15 +162,98 @@ local QOLButton1 = QOLTab:CreateButton({
                Ignore = {
                   Name = "Debug",
                   Callback = function()
-                  print("SelectedPet:")
-                  print(SelectedPet)
-                  print("SelectedPetSlot:")
-                  print(SelectedPetSlot)
-               end
+                     print("SelectedPet:")
+                     print(SelectedPet)
+                     print("SelectedPetSlot:")
+                     print(SelectedPetSlot)
+                  end
+               },
             },
-         },
          })
       end
+   end,
+})
+
+local QOLButton2 = QOLTab:CreateButton({
+   Name = "Unequip Pet",
+   Callback = function()
+      game:GetService("ReplicatedStorage").Remote.EquipPet:FireServer(0,SelectedPetSlot)
+   end,
+})
+
+local QOLParagraph2 = QOLTab:CreateParagraph({Title = "Delete Pet", Content = "Select the slot you want to delete (in Select Pet Input), after deleting, next pet will move to that slot. There is an extra toggle that is required to delete pets."})
+
+local QOLButton3 = QOLTab:CreateButton({
+   Name = "Delete Pet",
+   Callback = function()
+      if DeletePetLock == true then 
+         game:GetService("ReplicatedStorage").Remote.DeletePet:FireServer(SelectedPet)
+         if AutoRerollToggle == true then
+            game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("OpenPetChest"):InvokeServer(SelectedChest)
+         end
+      else
+         Rayfield:Notify({
+            Title = "Delete Pet Lock",
+            Content = "Delete Pet Lock prevented you from deleting SelectedPet. Press the button to disable it for 1 minute.",
+            Duration = 5,
+            Image = nil,
+            Actions = { -- Notification Buttons
+               Ignore = {
+                  Name = "Disable Lock",
+                  Callback = function()
+                     DeletePetLock = true
+                  end
+               },
+            },
+         })
+      end
+   end,
+})
+
+local QOLSection2 = QOLTab:CreateSection("Chests")
+
+local QOLDropdown2 = QOLTab:CreateDropdown({
+   Name = "Select Chest",
+   Options = {
+      "Training Area Chest",
+      "Werewolf Chest",
+      "Deep Seas Chest",
+      "Magma Chest",
+      "Castle Chest",
+      "Candy Chest",
+      "Cheap Mount Chest",
+      "Mount Chest"
+   },
+   CurrentOption = "Training Area Chest",
+   MultipleOptions = false,
+   Flag = "QOLDropdown2",
+   Callback = function(Option)
+      SelectedChestName = Option[1]
+      for i, v in pairs(ChestOptions) do
+         if v == SelectedChestName then
+            SelectedChest = i
+            break
+         end
+      end
+   end,
+})
+
+local QOLButton4 = QOLTab:CreateButton({
+   Name = "Buy Chest",
+   Callback = function()
+   print(SelectedChest)
+      game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("OpenPetChest"):InvokeServer(SelectedChest)
+   end,
+})
+
+local QOLParagraph3 = QOLTab:CreateParagraph({Title = "Auto Reroll", Content = "Automatically buys another chest (selected) after you delete a pet (using Delete Pet button)"})
+
+local QOLToggle1 = QOLTab:CreateToggle({
+   Name = "Auto Reroll",
+   CurrentValue = false,
+   Flag = "QOLToggle1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Value)
+      AutoRerollToggle = Value
    end,
 })
 
@@ -527,7 +625,7 @@ local ToolButton1 = ToolTab:CreateButton({
 local ToolButton2 = ToolTab:CreateButton({
    Name = "Remote Spy",
    Callback = function()
-      loadstring(game:HttpGet("https://raw.githubusercontent.com/exxtremestuffs/SimpleSpySource/master/SimpleSpy.lua"))() -- Credit: SimpleSpy v3
+      loadstring(game:HttpGet("https://raw.githubusercontent.com/78n/SimpleSpy/main/SimpleSpySource.lua"))() -- Credit: SimpleSpy v3
    end,
 })
 
@@ -693,6 +791,18 @@ end)
 spawn(function()
    while wait(0.1) do
       if AutoRechargeToggle == true and ManaPercentage < 30 then game:GetService("ReplicatedStorage").Remote.Recharge:FireServer() end
+   end
+end)
+
+-- pet lock
+spawn(function()
+   while wait(0.1) do
+      if DeletePetLockOld ~= DeletePetLock then
+         wait(60)
+         DeletePetLock = false
+      end
+      DeletePetLockOld = DeletePetLock
+      
    end
 end)
 
