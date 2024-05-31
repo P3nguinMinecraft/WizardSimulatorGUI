@@ -493,14 +493,18 @@ local AutoFarmDropdown1 = AutoFarmTab:CreateDropdown({
    Name = "Enemy Selection",
    Options = {
       "Dummy","DummyWarrior","DummyArcher","DummySpearman","DummyWizard",
+      "EarthGolem","Stone3","DummyKing",
       "GreenSlime","BigSlime","Spider","GiantSpider",
       "Wolf","Werewolf","Bear",
+      "StoneGolem","Stone1","Lumberjack","GiantWerewolf",
       "BeachCrab","RockCrab","Clam",
       "Jellyfish","IceJellyfish",
       "GreenPirate","RedPirate",
+      "WaterGolem","Stone4","KingPirate",
       "MagmaSlime","GiantMagmaSlime",
       "FireAnt","GiantFireAnt",
       "MagmaCrab","MagmaSpider","MagmaScorpion","Worm",
+      "MagmaGolem","Stone2","MagmaKing","MagmaEater"
       "DummyKnight","DummyArcher2","DummySpearman2",
       "SmallWasp","Wasp",
       "SmallTreant","Treant",
