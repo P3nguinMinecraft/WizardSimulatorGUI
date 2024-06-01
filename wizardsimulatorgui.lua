@@ -718,7 +718,6 @@ end)
 -- health detector
 Humanoid.HealthChanged:Connect(function()
     HealthPercentage = Humanoid.Health / Humanoid.MaxHealth * 100
-    print(HealthPercentage)
 end)
 
 
@@ -771,7 +770,7 @@ spawn(function()
       if PlayerPos and AutoFarmToggle then
          local TargetEnemy = nil
          local TargetDistance = AutoFarmTarget == "Closest" and math.huge or 0 -- if targetting closest targetdistance is big number,
-         local SeenEnemies = {} -- Keep track of enemies seen before
+         local SeenEnemies = {}
          for _, EnemyName in ipairs(AutoFarmEnemyNames) do
 
             -- Search levels
@@ -783,7 +782,7 @@ spawn(function()
                         local EnemyPos = Enemy.PrimaryPart and Enemy.PrimaryPart.Position
                         if EnemyPos then
                            local Distance = (PlayerPos - EnemyPos).magnitude
-                           -- Check target method and update accordingly
+
                            if AutoFarmTarget == "Closest" then
                               if Distance < TargetDistance then
                                  TargetEnemy = Enemy
@@ -816,7 +815,7 @@ spawn(function()
                         local EnemyPos = Enemy.PrimaryPart and Enemy.PrimaryPart.Position
                         if EnemyPos then
                            local Distance = (PlayerPos - EnemyPos).magnitude
-                           -- Check target method and update accordingly
+
                            if AutoFarmTarget == "Closest" then
                               if Distance < TargetDistance and Distance < SpellRange then
                                  TargetEnemy = Enemy
@@ -846,6 +845,7 @@ spawn(function()
             if not TargetEnemy.Parent then
                SeenEnemies[TargetEnemy] = nil -- Remove the enemy from the SeenEnemies list
             end
+         end
 
          -- perform attack
          if TargetEnemy and TargetDistance < SpellRange then
@@ -855,7 +855,6 @@ spawn(function()
             game:GetService("ReplicatedStorage").Remote.CastSpell:FireServer(SpellState, TargetEnemy)
             SpellState = SpellState == 1 and 2 or 1 -- toggle between 1 and 2
          end
-
       end
    end
 end)
@@ -876,7 +875,6 @@ spawn(function()
          DeletePetLock = false
       end
       DeletePetLockOld = DeletePetLock
-      
    end
 end)
 
