@@ -532,7 +532,7 @@ local AutoFarmDropdown2 = AutoFarmTab:CreateDropdown({
    end,
 })
 
-local AutoFarmParagraph2 = AutoFarmTab:CreateParagraph({Title = "Spell Delay", Content = "Spell Delay is the amount of time to cycle through ONE of your spells plus some room because of staff cast animation delay. However, you should have the same spell in BOTH SLOTS."})
+local AutoFarmParagraph2 = AutoFarmTab:CreateParagraph({Title = "Spell Delay", Content = "Spell Delay is the amount of time to cycle through ONE of your spells, so the amount of time to recharge the spell. You should have the same spell in both slots."})
 
 local AutoFarmSlider1 = AutoFarmTab:CreateSlider({
    Name = "Spell Delay",
@@ -560,7 +560,7 @@ local AutoFarmSlider2 = AutoFarmTab:CreateSlider({
    end,
 })
 
-local AutoFarmParagraph4 = AutoFarmTab:CreateParagraph({Title = "Auto Farm Quest", Content = "This only auto gives the CJ:4 quest for when you auto farm Dummy. AFAIK this is the fastest grind method for XP and coins (correct me if I'm wrong) This is a replacement for Auto Give Quest (so turn it off). Fastest spell delay time is 2.2sec to make the quest register correctly."})
+local AutoFarmParagraph4 = AutoFarmTab:CreateParagraph({Title = "Auto Farm Quest", Content = "This only auto gives the CJ:4 quest for when you auto farm Dummy. AFAIK this is the fastest grind method for XP and coins (correct me if I'm wrong) This is a replacement for Auto Give Quest (so turn it off)."})
 
 local AutoFarmToggle2 = AutoFarmTab:CreateToggle({
    Name = "Auto Farm Quest",
