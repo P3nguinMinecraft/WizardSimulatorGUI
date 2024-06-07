@@ -33,7 +33,7 @@ local ChestOptions = {
    ["CheapMountChest"] = "Cheap Mount Chest",
    ["MountChest"] = "Mount Chest"
 }
-local SelectedChestName
+local SelectedChestName = "Training Area Chest"
 local SelectedChest = "Chest1"
 local AutoRerollToggle = false
 local SelectedQuest = "LJ:1"
@@ -51,7 +51,7 @@ local AutoManaToggle = false
 local AutoHealthThreshold = 0
 local AutoManaThreshold = 0
 local AutoFarmToggle = false
-local EnemyOptions = Options = {
+local AutoFarmEnemyOptions = {
    ["Dummy"] = "[1] Training Dummy",
    ["DummyWarrior"] = "[3] Dummy Warrior",
    ["DummyArcher"] = "[6] Dummy Archer",
@@ -93,26 +93,27 @@ local EnemyOptions = Options = {
    ["Stone2"] = "[54] Summoned Magma Rock",
    ["MagmaKing"] = "Magma King",
    ["MagmaEater"] = "Magma Eater",
-   ["DummyKnight"] = "Elite Dummy Knight",
-   ["DummyArcher2"] = "Elite Dummy Archer",
-   ["DummySpearman2"] = "Elite Dummy Spearman",
-   ["SmallWasp"] = "Wasp",
-   ["Wasp"] = "Giant Wasp",
-   ["SmallTreant"] = "Stumpant",
-   ["Treant"] = "Treant",
-   ["RockScorpion"] = "Rock Scorpion",
-   ["RockTitan"] = "Rock Titan",
-   ["SmallJello"] = "Small Jello",
-   ["Cupcake"] = "Cupcake",
-   ["Donut"] = "Donut",
-   ["BigJello"] = "Big Jello",
-   ["GummyWorm"] = "Gummy Worm",
-   ["GingerbreadSoldier"] = "Gingerbread Soldier",
-   ["GingerbreadWizard"] = "Gingerbread Wizard",
-   ["CandyGolem"] = "Candy Golem",
-   ["CandyMuncher"] = "Candy Muncher"
+   ["DummyKnight"] = "[58] Elite Dummy Knight",
+   ["DummyArcher2"] = "[60] Elite Dummy Archer",
+   ["DummySpearman2"] = "[62] Elite Dummy Spearman",
+   ["SmallWasp"] = "[64] Wasp",
+   ["Wasp"] = "[66] Giant Wasp",
+   ["SmallTreant"] = "[66] Stumpant",
+   ["Treant"] = "[68] Treant",
+   ["RockScorpion"] = "[69] Rock Scorpion",
+   ["RockTitan"] = "[71] Rock Titan",
+   ["SmallJello"] = "[74] Small Jello",
+   ["Cupcake"] = "[75] Cupcake",
+   ["Donut"] = "[77] Donut",
+   ["BigJello"] = "[78] Big Jello",
+   ["GummyWorm"] = "[80] Gummy Worm",
+   ["GingerbreadSoldier"] = "[81] Gingerbread Soldier",
+   ["GingerbreadWizard"] = "[82] Gingerbread Wizard",
+   ["CandyGolem"] = "[84] Candy Golem",
+   ["StaticWaypoint"] = "Candy Chomper (also targets gates)"
 }
-local AutoFarmEnemies = "Dummy"
+local AutoFarmEnemyNames = {"[1] Training Dummy"}
+local AutoFarmEnemies = {"Dummy"}
 local AutoFarmTarget = "Closest"
 local AutoFarmDelay = 2.2
 local AutoFarmQuestToggle = false
@@ -554,37 +555,79 @@ local AutoFarmSection1 = AutoFarmTab:CreateSection("Settings")
 local AutoFarmDropdown1 = AutoFarmTab:CreateDropdown({
    Name = "Enemy Selection",
    Options = {
-      "Dummy","DummyWarrior","DummyArcher","DummySpearman","DummyWizard",
-      "EarthGolem","Stone3","DummyKing",
-      "GreenSlime","BigSlime","Spider","GiantSpider",
-      "Wolf","Werewolf","Bear",
-      "StoneGolem","Stone1","Lumberjack","GiantWerewolf",
-      "BeachCrab","RockCrab","Clam",
-      "Jellyfish","IceJellyfish",
-      "GreenPirate","RedPirate",
-      "WaterGolem","Stone4","KingPirate",
-      "MagmaSlime","GiantMagmaSlime",
-      "FireAnt","GiantFireAnt",
-      "MagmaCrab","MagmaSpider","MagmaScorpion","Worm",
-      "MagmaGolem","Stone2","MagmaKing","MagmaEater",
-      "DummyKnight","DummyArcher2","DummySpearman2",
-      "SmallWasp","Wasp",
-      "SmallTreant","Treant",
-      "RockScorpion","RockTitan",
-      "SmallJello","Cupcake","Donut","BigJello","GummyWorm",
-      "GingerbreadSoldier","GingerbreadWizard",
-      "CandyGolem","CandyMuncher"},
-   CurrentOption = {"Dummy"},
+      "[1] Training Dummy",
+      "[3] Dummy Warrior",
+      "[6] Dummy Archer",
+      "[8] Dummy Spearman",
+      "[12] Dummy Wizard",
+      "[24] Earth Golem",
+      "[24] Summoned Earth Rock",
+      "Dummy King",
+      "[12] Green Slime",
+      "[17] Giant Green Slime",
+      "[15] Spider",
+      "[20] Big Spider",
+      "[22] Wolf",
+      "[25] Werewolf",
+      "[26] Bear",
+      "[32] Stone Golem",
+      "[32] Summoned Rock",
+      "Lumberjack",
+      "Lumberjack? (Werewolf)",
+      "[28] Beach Crab",
+      "[30] Clam",
+      "[32] Rock Crab",
+      "[35] Jellyfish",
+      "[36] Ice Jellyfish",
+      "[38] Green Pirate",
+      "[39] Red Pirate",
+      "[42] Water Golem",
+      "[42] Summoned Water Rock",
+      "Pirate King",
+      "[40] Magma Slime",
+      "[43] Giant Magma Slime",
+      "[43] Fire Ant",
+      "[46] Giant Fire Ant",
+      "[48] Magma Crab",
+      "[49] Magma Spider",
+      "[51] Magma Scorpion",
+      "[53] Magma Worm",
+      "[54] Magma Golem",
+      "[54] Summoned Magma Rock",
+      "Magma King",
+      "Magma Eater",
+      "[58] Elite Dummy Knight",
+      "[60] Elite Dummy Archer",
+      "[62] Elite Dummy Spearman",
+      "[64] Wasp",
+      "[66] Giant Wasp",
+      "[66] Stumpant",
+      "[68] Treant",
+      "[69] Rock Scorpion",
+      "[71] Rock Titan",
+      "[74] Small Jello",
+      "[75] Cupcake",
+      "[77] Donut",
+      "[78] Big Jello",
+      "[80] Gummy Worm",
+      "[81] Gingerbread Soldier",
+      "[82] Gingerbread Wizard",
+      "[84] Candy Golem",
+      "Candy Chomper (also targets gates)"
+   },
+   CurrentOption = {"[1] Training Dummy"},
    MultipleOptions = true,
    Flag = "AutoFarmDropdown1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Options)
+      AutoFarmEnemyNames = {}
+      AutoFarmEnemies = {}
       for _, Option in ipairs(Options) do
-         table.insert(SelectedEnemyNames, Option[1]) -- Add each selected enemy name to the table
+         table.insert(AutoFarmEnemyNames, Option)
       end
-      for _, selectedName in ipairs(SelectedEnemyNames) do
-         for identifier, displayName in pairs(EnemyOptions) do
-            if displayName == selectedName then
-               table.insert(SelectedChests, identifier) -- Add the corresponding chest identifier to the table
+      for _, SelectedEnemyName in ipairs(AutoFarmEnemyNames) do
+         for Identifier, SelectionName in pairs(AutoFarmEnemyOptions) do
+            if SelectionName ==  SelectedEnemyName then
+               table.insert(AutoFarmEnemies, Identifier)
                break
             end
          end
@@ -843,7 +886,7 @@ spawn(function()
          local TargetDistance = AutoFarmTarget == "Closest" and math.huge or 0 -- if targetting closest targetdistance is big number,
          local SeenEnemies = {}
          for _, EnemyName in ipairs(AutoFarmEnemies) do
-
+            print(EnemyName)
             -- Search levels
             for _, LevelFolder in ipairs(Workspace.Levels:GetChildren()) do
                local LevelEnemiesFolder = LevelFolder:FindFirstChild("Enemies")
