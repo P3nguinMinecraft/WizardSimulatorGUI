@@ -51,7 +51,68 @@ local AutoManaToggle = false
 local AutoHealthThreshold = 0
 local AutoManaThreshold = 0
 local AutoFarmToggle = false
-local AutoFarmEnemyNames = {"Dummy"}
+local EnemyOptions = Options = {
+   ["Dummy"] = "[1] Training Dummy",
+   ["DummyWarrior"] = "[3] Dummy Warrior",
+   ["DummyArcher"] = "[6] Dummy Archer",
+   ["DummySpearman"] = "[8] Dummy Spearman",
+   ["DummyWizard"] = "[12] Dummy Wizard",
+   ["EarthGolem"] = "[24] Earth Golem",
+   ["Stone3"] = "[24] Summoned Earth Rock",
+   ["DummyKing"] = "Dummy King",
+   ["GreenSlime"] = "[12] Green Slime",
+   ["BigSlime"] = "[17] Giant Green Slime",
+   ["Spider"] = "[15] Spider",
+   ["GiantSpider"] = "[20] Big Spider",
+   ["Wolf"] = "[22] Wolf",
+   ["Werewolf"] = "[25] Werewolf",
+   ["Bear"] = "[26] Bear",
+   ["StoneGolem"] = "[32] Stone Golem",
+   ["Stone1"] = "[32] Summoned Rock",
+   ["Lumberjack"] = "Lumberjack",
+   ["GiantWerewolf"] = "Lumberjack? (Werewolf)",
+   ["BeachCrab"] = "[28] Beach Crab",
+   ["Clam"] = "[30] Clam",
+   ["RockCrab"] = "[32] Rock Crab",
+   ["Jellyfish"] = "[35] Jellyfish",
+   ["IceJellyfish"] = "[36] Ice Jellyfish",
+   ["GreenPirate"] = "[38] Green Pirate",
+   ["RedPirate"] = "[39] Red Pirate",
+   ["WaterGolem"] = "[42] Water Golem",
+   ["Stone4"] = "[42] Summoned Water Rock",
+   ["KingPirate"] = "Pirate King",
+   ["MagmaSlime"] = "[40] Magma Slime",
+   ["GiantMagmaSlime"] = "[43] Giant Magma Slime",
+   ["FireAnt"] = "[43] Fire Ant",
+   ["GiantFireAnt"] = "[46] Giant Fire Ant",
+   ["MagmaCrab"] = "[48] Magma Crab",
+   ["MagmaSpider"] = "[49] Magma Spider",
+   ["MagmaScorpion"] = "[51] Magma Scorpion",
+   ["Worm"] = "[53] Magma Worm",
+   ["MagmaGolem"] = "[54] Magma Golem",
+   ["Stone2"] = "[54] Summoned Magma Rock",
+   ["MagmaKing"] = "Magma King",
+   ["MagmaEater"] = "Magma Eater",
+   ["DummyKnight"] = "Elite Dummy Knight",
+   ["DummyArcher2"] = "Elite Dummy Archer",
+   ["DummySpearman2"] = "Elite Dummy Spearman",
+   ["SmallWasp"] = "Wasp",
+   ["Wasp"] = "Giant Wasp",
+   ["SmallTreant"] = "Stumpant",
+   ["Treant"] = "Treant",
+   ["RockScorpion"] = "Rock Scorpion",
+   ["RockTitan"] = "Rock Titan",
+   ["SmallJello"] = "Small Jello",
+   ["Cupcake"] = "Cupcake",
+   ["Donut"] = "Donut",
+   ["BigJello"] = "Big Jello",
+   ["GummyWorm"] = "Gummy Worm",
+   ["GingerbreadSoldier"] = "Gingerbread Soldier",
+   ["GingerbreadWizard"] = "Gingerbread Wizard",
+   ["CandyGolem"] = "Candy Golem",
+   ["CandyMuncher"] = "Candy Muncher"
+}
+local AutoFarmEnemies = "Dummy"
 local AutoFarmTarget = "Closest"
 local AutoFarmDelay = 2.2
 local AutoFarmQuestToggle = false
@@ -516,8 +577,18 @@ local AutoFarmDropdown1 = AutoFarmTab:CreateDropdown({
    CurrentOption = {"Dummy"},
    MultipleOptions = true,
    Flag = "AutoFarmDropdown1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
-   Callback = function(Option)
-      AutoFarmEnemyNames = Option
+   Callback = function(Options)
+      for _, Option in ipairs(Options) do
+         table.insert(SelectedEnemyNames, Option[1]) -- Add each selected enemy name to the table
+      end
+      for _, selectedName in ipairs(SelectedEnemyNames) do
+         for identifier, displayName in pairs(EnemyOptions) do
+            if displayName == selectedName then
+               table.insert(SelectedChests, identifier) -- Add the corresponding chest identifier to the table
+               break
+            end
+         end
+      end
    end,
 })
 
@@ -771,7 +842,7 @@ spawn(function()
          local TargetEnemy = nil
          local TargetDistance = AutoFarmTarget == "Closest" and math.huge or 0 -- if targetting closest targetdistance is big number,
          local SeenEnemies = {}
-         for _, EnemyName in ipairs(AutoFarmEnemyNames) do
+         for _, EnemyName in ipairs(AutoFarmEnemies) do
 
             -- Search levels
             for _, LevelFolder in ipairs(Workspace.Levels:GetChildren()) do
