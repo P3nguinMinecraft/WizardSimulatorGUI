@@ -12,6 +12,7 @@ local Player = game:GetService("Players").LocalPlayer
 local Humanoid = Player.Character:WaitForChild("Humanoid")
 local Workspace = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
+local PickupGuiContainer = game:GetService("Players").LocalPlayer.PlayerGui.GameGui.Pickup
 local SpellState = 1
 local SelectedPet = 0
 local PetSlotOptions = {
@@ -38,11 +39,8 @@ local SelectedChest = "Chest1"
 local AutoRerollToggle = false
 local SelectedQuest = "LJ:1"
 local AutoQuestToggle = false
-local WalkspeedToggleOld = false
-local WalkspeedToggle = false
-local Walkspeed = 16
-local JumpPowerToggle = false
-local JumpPower = 50
+local TrackGold = false
+local TrackXP = false
 local HPot, MPot
 local HealthPercentage = Humanoid.Health / Humanoid.MaxHealth * 100
 local PreviousMana, Mana, MaxMana, ManaPercentage
@@ -119,6 +117,19 @@ local AutoFarmDelay = 2.2
 local AutoFarmQuestToggle = false
 local AutoRechargeToggle = false
 local SpellRange = 100
+local TrackedGold = 0
+local TrackedXP = 0
+local Multipliers = {
+   K = 1000, -- Thousand
+   M = 1000000, -- Million
+   B = 1000000000, -- Billion
+}
+local TrackedElements = {}
+local WalkspeedToggleOld = false
+local WalkspeedToggle = false
+local Walkspeed = 16
+local JumpPowerToggle = false
+local JumpPower = 50
 
 print("[WSG] Loading Window")
 
@@ -223,12 +234,8 @@ local QOLButton1 = QOLTab:CreateButton({
             Image = nil,
             Actions = { -- Notification Buttons
                Ignore = {
-                  Name = "Debug",
+                  Name = "OK",
                   Callback = function()
-                     print("SelectedPet:")
-                     print(SelectedPet)
-                     print("SelectedPetSlot:")
-                     print(SelectedPetSlot)
                   end
                },
             },
@@ -694,6 +701,78 @@ local AutoFarmToggle3 = AutoFarmTab:CreateToggle({
    end,
 })
 
+print("[WSG] Loading Tracker Tab")
+
+local TrackerTab = Window:CreateTab("Tracker", nil) -- Title, Image
+
+local TrackerSection1 = TrackerTab:CreateSection("Gold")
+
+local TrackerLabel1 = TrackerTab:CreateLabel("Tracked Gold: 0")
+
+local TrackerToggle1 = TrackerTab:CreateToggle({
+   Name = "Track Gold",
+   CurrentValue = false,
+   Flag = "TrackerToggle1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Value)
+      TrackGold = Value
+   end,
+})
+
+local TrackerButton1 = TrackerTab:CreateButton({
+   Name = "Reset Gold",
+   Callback = function()
+      TrackerLabel1:Set("Tracked Gold: 0")
+      TrackedGold = 0
+      Rayfield:Notify({
+         Title = "Reset Gold",
+         Content = "Tracked Gold has been reset for this session.",
+         Duration = 5,
+         Image = nil,
+         Actions = { -- Notification Buttons
+            Ignore = {
+               Name = "OK",
+               Callback = function()
+               end
+            },
+         },
+      })
+   end,
+})
+
+local TrackerSection2 = TrackerTab:CreateSection("XP")
+
+local TrackerLabel2 = TrackerTab:CreateLabel("Tracked XP: 0")
+
+local TrackerToggle2 = TrackerTab:CreateToggle({
+   Name = "Track XP",
+   CurrentValue = false,
+   Flag = "TrackerToggle2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Value)
+      TrackXP = Value
+   end,
+})
+
+local TrackerButton1 = TrackerTab:CreateButton({
+   Name = "Reset XP",
+   Callback = function()
+      TrackerLabel2:Set("Tracked XP: 0")
+      TrackedXP = 0
+      Rayfield:Notify({
+         Title = "Reset XP",
+         Content = "Tracked XP has been reset for this session.",
+         Duration = 5,
+         Image = nil,
+         Actions = { -- Notification Buttons
+            Ignore = {
+               Name = "OK",
+               Callback = function()
+               end
+            },
+         },
+      })
+   end,
+})
+
 print("[WSG] Loading Tools Tab")
 
 local ToolTab = Window:CreateTab("Tools", nil) -- Title, Image
@@ -808,23 +887,14 @@ UserInputService.InputBegan:Connect(function(input)
 end)
 
 
--- walkspeed and jumppower management
+-- pet lock
 spawn(function()
    while wait(0.1) do
-      if WalkspeedToggleOld == true and WalkspeedToggle == false then
-         Humanoid.WalkSpeed = 16
+      if DeletePetLockOld ~= DeletePetLock then
+         wait(60)
+         DeletePetLock = false
       end
-      if WalkspeedToggle then
-         Humanoid.WalkSpeed = Walkspeed
-      end
-      if JumpPowerToggleOld == true and JumpPowerToggle ==false then
-         Humanoid.JumpPower = 50
-      end
-      if JumpPowerToggle then
-         Humanoid.JumpPower = JumpPower
-      end
-      WalkspeedToggleOld = WalkspeedToggle
-      JumpPowerToggleOld = JumpPowerToggle
+      DeletePetLockOld = DeletePetLock
    end
 end)
 
@@ -981,15 +1051,90 @@ spawn(function()
    end
 end)
 
--- pet lock
-spawn(function()
-   while wait(0.1) do
-      if DeletePetLockOld ~= DeletePetLock then
-         wait(60)
-         DeletePetLock = false
+
+-- trackers
+local function ParseText(inputtext)
+   local amount, abbreviation, TextType = inputtext:match("([%d]*[%.]*[%d]*)%s*([KMB]?)%s*(%a*)")
+   if not TextType or TextType == "" then
+      TextType = "Gold"
+   end
+   local Multiplier = Multipliers[abbreviation:upper()] or 1
+   local TotalAmount = tonumber(amount) * Multiplier
+   return TotalAmount, TextType
+end
+-- DIRECTORY FOR CODING PURPOSES: PickupGuiContainer (game.Players.LocalPlayer.PlayerGui.GameGui.Pickup).PickupFrame.Amount(text)
+PickupGuiContainer.ChildAdded:Connect(function(GuiFrame) 
+   for _, TextLabel in ipairs(GuiFrame:GetChildren()) do
+      if TextLabel.Name == "Amount" and TrackedElements[GuiFrame] ~= true then
+         wait(0.1) -- because if its instant the text is "Explosion" for some fucking reason
+         local Amount, Type = ParseText(TextLabel.Text)
+         print("Text: " .. TextLabel.Text)
+         -- update display here for now its just output
+         print(Amount .. " " .. Type)
+         if Type == "Gold" then
+            if TrackGold == true then
+               TrackedGold = TrackedGold + Amount
+               TrackerLabel1:Set("Tracked Gold: " .. TrackedGold)
+            end
+         elseif Type == "XP" then
+            if TrackXP == true then
+               TrackedXP = TrackedXP + Amount
+               TrackerLabel2:Set("Tracked XP: " .. TrackedXP)
+            end
+         else
+            Rayfield:Notify({
+               Title = "Error",
+               Content = "Statistic type is not 'Gold' or 'XP'! How did this happen?",
+               Duration = 5,
+               Image = nil,
+               Actions = { -- Notification Buttons
+                  Ignore = {
+                     Name = "Debug",
+                     Callback = function()
+                        print("Raw:")
+                        print(TextLabel.Text)
+                        print("Amount:")
+                        print(Amount)
+                        print("Type:")
+                        print(Type)
+                     end
+                  },
+               },
+            })
+         end
+
+         -- tracked deletion
+         TrackedElements[GuiFrame] = true
+         GuiFrame.AncestryChanged:Connect(function(_, parent)
+            if parent == nil then
+               TrackedElements[GuiFrame] = nil
+            end
+         end)
+         break
       end
-      DeletePetLockOld = DeletePetLock
    end
 end)
+
+
+-- walkspeed and jumppower management
+spawn(function()
+   while wait(0.1) do
+      if WalkspeedToggleOld == true and WalkspeedToggle == false then
+         Humanoid.WalkSpeed = 16
+      end
+      if WalkspeedToggle then
+         Humanoid.WalkSpeed = Walkspeed
+      end
+      if JumpPowerToggleOld == true and JumpPowerToggle ==false then
+         Humanoid.JumpPower = 50
+      end
+      if JumpPowerToggle then
+         Humanoid.JumpPower = JumpPower
+      end
+      WalkspeedToggleOld = WalkspeedToggle
+      JumpPowerToggleOld = JumpPowerToggle
+   end
+end)
+
 
 print("[WSG] Loaded!")
