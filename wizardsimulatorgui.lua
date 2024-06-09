@@ -833,27 +833,34 @@ local ToolButton1 = ToolTab:CreateButton({
 })
 
 local ToolButton2 = ToolTab:CreateButton({
-   Name = "Remote Spy",
+   Name = "Remote Spy (Simple Spy v3)",
    Callback = function()
       loadstring(game:HttpGet("https://raw.githubusercontent.com/78n/SimpleSpy/main/SimpleSpySource.lua"))() -- Credit: SimpleSpy v3
    end,
 })
 
 local ToolButton3 = ToolTab:CreateButton({
+   Name = "Remote Spy (Simple Spy v2.2)",
+   Callback = function()
+      loadstring(game:HttpGet("https://raw.githubusercontent.com/exxtremestuffs/SimpleSpySource/master/SimpleSpy.lua"))() -- Credit: SimpleSpy v3
+   end,
+})
+
+local ToolButton4 = ToolTab:CreateButton({
    Name = "Orca",
    Callback = function()
       loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/richie0866/orca/master/public/latest.lua"))() -- Credit: orca
    end,
 })
 
-local ToolButton4 = ToolTab:CreateButton({
+local ToolButton5 = ToolTab:CreateButton({
    Name = "CMD-X",
    Callback = function()
       loadstring(game:HttpGet("https://raw.githubusercontent.com/CMD-X/CMD-X/master/Source",true))() -- Credit: CMD-X
    end,
 })
 
-local ToolButton5 = ToolTab:CreateButton({
+local ToolButton6 = ToolTab:CreateButton({
    Name = "Dex",
    Callback = function()
       loadstring(game:HttpGet('https://ithinkimandrew.site/scripts/tools/dark-dex.lua'))()
