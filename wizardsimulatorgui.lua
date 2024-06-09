@@ -1074,12 +1074,12 @@ PickupGuiContainer.ChildAdded:Connect(function(GuiFrame)
          if Type == "Gold" then
             if TrackGold == true then
                TrackedGold = TrackedGold + Amount
-               TrackerLabel1:Set("Tracked Gold: " .. TrackedGold)
+               TrackerLabel1:Set("Tracked Gold: " .. string.format("%0.0f", TrackedGold):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
             end
          elseif Type == "XP" then
             if TrackXP == true then
                TrackedXP = TrackedXP + Amount
-               TrackerLabel2:Set("Tracked XP: " .. TrackedXP)
+               TrackerLabel2:Set("Tracked XP: " .. string.format("%0.0f", TrackedXP):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
             end
          else
             Rayfield:Notify({
