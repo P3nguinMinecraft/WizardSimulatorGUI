@@ -963,7 +963,6 @@ spawn(function()
          local TargetDistance = AutoFarmTarget == "Closest" and math.huge or 0 -- if targetting closest targetdistance is big number,
          local SeenEnemies = {}
          for _, EnemyName in ipairs(AutoFarmEnemies) do
-            print(EnemyName)
             -- Search levels
             for _, LevelFolder in ipairs(Workspace.Levels:GetChildren()) do
                local LevelEnemiesFolder = LevelFolder:FindFirstChild("Enemies")
@@ -1061,11 +1060,13 @@ end)
 
 -- trackers
 local function ParseText(inputtext)
-   local amount, abbreviation, TextType = inputtext:match("([%d]*[%.]*[%d]*)%s*([KMB]?)%s*(%a*)")
+   local amount, abbreviation, TextType = inputtext:match("([%d]*[%.]*[%d]*)%s*([kMB]?)%s*(%a*)")
    if not TextType or TextType == "" then
       TextType = "Gold"
    end
+   print(abbreviation)
    local Multiplier = Multipliers[abbreviation:upper()] or 1
+   print(Multiplier)
    local TotalAmount = tonumber(amount) * Multiplier
    return TotalAmount, TextType
 end
@@ -1075,9 +1076,13 @@ PickupGuiContainer.ChildAdded:Connect(function(GuiFrame)
       if TextLabel.Name == "Amount" and TrackedElements[GuiFrame] ~= true then
          wait(0.1) -- because if its instant the text is "Explosion" for some fucking reason
          local Amount, Type = ParseText(TextLabel.Text)
-         print("Text: " .. TextLabel.Text)
+         print("Raw:")
+                        print(TextLabel.Text)
+                        print("Amount:")
+                        print(Amount)
+                        print("Type:")
+                        print(Type)
          -- update display here for now its just output
-         print(Amount .. " " .. Type)
          if Type == "Gold" then
             if TrackGold == true then
                TrackedGold = TrackedGold + Amount
