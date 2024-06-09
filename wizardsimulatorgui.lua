@@ -39,8 +39,6 @@ local SelectedChest = "Chest1"
 local AutoRerollToggle = false
 local SelectedQuest = "LJ:1"
 local AutoQuestToggle = false
-local TrackGold = false
-local TrackXP = false
 local HPot, MPot
 local HealthPercentage = Humanoid.Health / Humanoid.MaxHealth * 100
 local PreviousMana, Mana, MaxMana, ManaPercentage
@@ -117,8 +115,13 @@ local AutoFarmDelay = 2.2
 local AutoFarmQuestToggle = false
 local AutoRechargeToggle = false
 local SpellRange = 100
+local TrackGold = false
+local TrackXP = false
 local TrackedGold = 0
 local TrackedXP = 0
+local TrackedGoldTimer = 0
+local TrackedXPTimer = 0
+local GoldMinutes, GoldSeconds, GoldDuration, GoldPerHour, XPMinutes, XPSeconds, XPDuration, XPPerHour
 local Multipliers = {
    K = 1000, -- Thousand
    M = 1000000, -- Million
@@ -709,6 +712,10 @@ local TrackerSection1 = TrackerTab:CreateSection("Gold")
 
 local TrackerLabel1 = TrackerTab:CreateLabel("Tracked Gold: 0")
 
+local TrackerLabel2 = TrackerTab:CreateLabel("Tracked Duration: 0 seconds")
+
+local TrackerLabel3 = TrackerTab:CreateLabel("Gold/Hour: 0")
+
 local TrackerToggle1 = TrackerTab:CreateToggle({
    Name = "Track Gold",
    CurrentValue = false,
@@ -723,6 +730,9 @@ local TrackerButton1 = TrackerTab:CreateButton({
    Callback = function()
       TrackerLabel1:Set("Tracked Gold: 0")
       TrackedGold = 0
+      TrackerLabel2:Set("Tracked Duration: 0 seconds")
+      TrackedGoldTimer = 0
+      TrackerLabel3:Set("Gold/Hour: 0")
       Rayfield:Notify({
          Title = "Reset Gold",
          Content = "Tracked Gold has been reset for this session.",
@@ -741,7 +751,11 @@ local TrackerButton1 = TrackerTab:CreateButton({
 
 local TrackerSection2 = TrackerTab:CreateSection("XP")
 
-local TrackerLabel2 = TrackerTab:CreateLabel("Tracked XP: 0")
+local TrackerLabel4 = TrackerTab:CreateLabel("Tracked XP: 0")
+
+local TrackerLabel5 = TrackerTab:CreateLabel("Tracked Duration: 0 seconds")
+
+local TrackerLabel6 = TrackerTab:CreateLabel("XP/Hour: 0")
 
 local TrackerToggle2 = TrackerTab:CreateToggle({
    Name = "Track XP",
@@ -755,8 +769,11 @@ local TrackerToggle2 = TrackerTab:CreateToggle({
 local TrackerButton1 = TrackerTab:CreateButton({
    Name = "Reset XP",
    Callback = function()
-      TrackerLabel2:Set("Tracked XP: 0")
+      TrackerLabel4:Set("Tracked XP: 0")
       TrackedXP = 0
+      TrackerLabel5:Set("Tracked Duration: 0 seconds")
+      TrackedXPTimer = 0
+      TrackerLabel6:Set("XP/Hour: 0")
       Rayfield:Notify({
          Title = "Reset XP",
          Content = "Tracked XP has been reset for this session.",
@@ -1118,6 +1135,51 @@ PickupGuiContainer.ChildAdded:Connect(function(GuiFrame)
       end
    end
 end)
+
+
+-- tracker timer
+spawn(function()
+   while wait(1) do
+      if TrackGold == true then
+         TrackedGoldTimer = TrackedGoldTimer + 1
+         GoldMinutes = math.floor(TrackedGoldTimer / 60)
+         GoldSeconds = TrackedGoldTimer % 60
+         if GoldMinutes > 0 then
+            GoldDuration = GoldMinutes .. " minutes and " .. GoldSeconds .. " seconds"
+         else
+            GoldDuration = GoldSeconds .. " seconds"
+         end
+         TrackerLabel2:Set("Tracked Duration: " .. GoldDuration)
+
+         if TrackedGoldTimer > 0 then
+            GoldPerHour = math.floor(TrackedGold / (TrackedGoldTimer / 3600))
+         else
+            GoldPerHour = nil
+         end
+         TrackerLabel3:Set("Gold/Hour: " .. string.format("%0.0f", GoldPerHour):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
+      end
+
+      if TrackXP == true then
+         TrackedXPTimer = TrackedXPTimer + 1
+         XPMinutes = math.floor(TrackedXPTimer / 60)
+         XPSeconds = TrackedXPTimer % 60
+         if XPMinutes > 0 then
+            XPDuration = XPMinutes .. " minutes and " .. XPSeconds .. " seconds"
+         else
+            XPDuration = XPSeconds .. " seconds"
+         end
+         TrackerLabel5:Set("Tracked Duration: " .. XPDuration)
+
+         if TrackedXPTimer > 0 then
+            XPPerHour = math.floor(TrackedXP / (TrackedXPTimer / 3600))
+         else
+            XPPerHour = nil
+         end
+         TrackerLabel6:Set("XP/Hour: " .. string.format("%0.0f", XPPerHour):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
+      end
+   end
+end)
+
 
 
 -- walkspeed and jumppower management
