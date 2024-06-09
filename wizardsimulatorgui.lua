@@ -1064,9 +1064,7 @@ local function ParseText(inputtext)
    if not TextType or TextType == "" then
       TextType = "Gold"
    end
-   print(abbreviation)
    local Multiplier = Multipliers[abbreviation:upper()] or 1
-   print(Multiplier)
    local TotalAmount = tonumber(amount) * Multiplier
    return TotalAmount, TextType
 end
@@ -1076,12 +1074,6 @@ PickupGuiContainer.ChildAdded:Connect(function(GuiFrame)
       if TextLabel.Name == "Amount" and TrackedElements[GuiFrame] ~= true then
          wait(0.1) -- because if its instant the text is "Explosion" for some fucking reason
          local Amount, Type = ParseText(TextLabel.Text)
-         print("Raw:")
-                        print(TextLabel.Text)
-                        print("Amount:")
-                        print(Amount)
-                        print("Type:")
-                        print(Type)
          -- update display here for now its just output
          if Type == "Gold" then
             if TrackGold == true then
