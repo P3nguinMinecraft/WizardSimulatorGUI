@@ -1100,7 +1100,7 @@ PickupGuiContainer.ChildAdded:Connect(function(GuiFrame)
          elseif Type == "XP" then
             if TrackXP == true then
                TrackedXP = TrackedXP + Amount
-               TrackerLabel2:Set("Tracked XP: " .. string.format("%0.0f", TrackedXP):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
+               TrackerLabel4:Set("Tracked XP: " .. string.format("%0.0f", TrackedXP):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
             end
          else
             Rayfield:Notify({
