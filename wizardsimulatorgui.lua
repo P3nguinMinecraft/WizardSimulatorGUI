@@ -10,9 +10,11 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 -- local vars
 local Player = game:GetService("Players").LocalPlayer
 local Humanoid = Player.Character:WaitForChild("Humanoid")
+local RootPart = Player.Character:WaitForChild("HumanoidRootPart")
 local Workspace = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
-local PickupGuiContainer = game:GetService("Players").LocalPlayer.PlayerGui.GameGui.Pickup
+local PickupGuiContainer = Player.PlayerGui.GameGui.Pickup
+local Level, Arena
 local SpellState = 1
 local SelectedPet = 0
 local PetSlotOptions = {
@@ -900,6 +902,16 @@ local DebugButton1 = DebugTab:CreateButton({
 })
 
 print("[WSG] Loading Scripts")
+
+-- level
+spawn(function()
+   while wait(0.1) do
+      Level = Player.Level.Value
+      if Level == "Boss" then
+         Arena = Player.Level:FindFirstChild("Arena").Value
+      end
+   end
+end)
 
 -- input detector
 UserInputService.InputBegan:Connect(function(input)
