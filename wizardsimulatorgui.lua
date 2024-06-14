@@ -14,7 +14,7 @@ local RootPart = Player.Character:WaitForChild("HumanoidRootPart")
 local Workspace = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
 local PickupGuiContainer = Player.PlayerGui.GameGui.Pickup
-local Level, Arena
+local Level, Arena, PlayerPos
 local SpellState = 1
 local SelectedPet = 0
 local PetSlotOptions = {
@@ -903,12 +903,15 @@ local DebugButton1 = DebugTab:CreateButton({
 
 print("[WSG] Loading Scripts")
 
--- level
+-- level and position
 spawn(function()
    while wait(0.1) do
       Level = Player.Level.Value
       if Level == "Boss" then
          Arena = Player.Level:FindFirstChild("Arena").Value
+      end
+      if Player and Player.Character then
+         PlayerPos = Player.Character.PrimaryPart and Player.Character.PrimaryPart.Position
       end
    end
 end)
@@ -986,7 +989,6 @@ end)
 -- autofarm
 spawn(function()
    while wait(AutoFarmDelay/2) do
-      local PlayerPos = Player.Character.PrimaryPart and Player.Character.PrimaryPart.Position
       if PlayerPos and AutoFarmToggle then
          local TargetEnemy = nil
          local TargetDistance = AutoFarmTarget == "Closest" and math.huge or 0 -- if targetting closest targetdistance is big number,
