@@ -796,9 +796,9 @@ print("[WSG] Loading Tools Tab")
 
 local ToolTab = Window:CreateTab("Tools", nil) -- Title, Image
 
-local ToolParagraph1 = ToolTab:CreateParagraph({Title = "Small Things", Content = "These are probably availiable in other universal scripts but I find it easy to access here"})
+local ToolParagraph1 = ToolTab:CreateParagraph({Title = "Small Things", Content = "These are probably availiable in other universal scripts but I find it easy to access here. Turning walkspeed on and keeping it at 16 will cancel the spell delay."})
 
-local ToolLabel1 = ToolTab:CreateLabel("Walkspeed might break mounts but idk")
+local ToolLabel1 = ToolTab:CreateLabel("Walkspeed")
 
 local ToolToggle1 = ToolTab:CreateToggle({
    Name = "Walkspeed Toggle",
@@ -1198,7 +1198,7 @@ end)
 
 -- walkspeed and jumppower management
 spawn(function()
-   while wait(0.1) do
+   while wait(0.01) do
       if WalkspeedToggleOld == true and WalkspeedToggle == false then
          Humanoid.WalkSpeed = 16
       end
