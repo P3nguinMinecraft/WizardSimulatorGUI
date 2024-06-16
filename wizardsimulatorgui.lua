@@ -113,6 +113,7 @@ local AutoFarmEnemyOptions = {
 local AutoFarmEnemyNames = {"[1] Training Dummy"}
 local AutoFarmEnemies = {"Dummy"}
 local AutoFarmTarget = "Closest"
+local HitEnemies = {}
 local AutoFarmDelay = 2.2
 local AutoFarmQuestToggle = false
 local AutoRechargeToggle = false
@@ -990,11 +991,20 @@ end)
 spawn(function()
    while wait(AutoFarmDelay/2) do
       if PlayerPos and AutoFarmToggle then
+
+         -- clean up hit enemies
+         if HitEnemies then
+            for HitEnemy, _ in pairs(HitEnemies) do
+               if not HitEnemy.Parent then
+                  HitEnemies[HitEnemy] = nil
+               end
+            end
+         end
+         
          local TargetEnemy = nil
-         local TargetDistance = AutoFarmTarget == "Closest" and math.huge or 0 -- if targetting closest targetdistance is big number,
-         local SeenEnemies = {}
+         local TargetDistance = AutoFarmTarget == "Farthest" and 0 or math.huge -- if targetting farthest default is 0, otherwise its math.huge
          for _, EnemyName in ipairs(AutoFarmEnemies) do
-            -- Search levels
+            -- search levels
             for _, LevelFolder in ipairs(Workspace.Levels:GetChildren()) do
                local LevelEnemiesFolder = LevelFolder:FindFirstChild("Enemies")
                if LevelEnemiesFolder then
@@ -1014,11 +1024,10 @@ spawn(function()
                                  TargetEnemy = Enemy
                                  TargetDistance = Distance
                               end
-                           elseif AutoFarmTarget == "NotHitBefore" then
-                              if not SeenEnemies[Enemy] then
+                           elseif AutoFarmTarget == "Never Hit" then
+                              if HitEnemies[Enemy] == nil and Distance < TargetDistance and Distance < SpellRange then
                                  TargetEnemy = Enemy
                                  TargetDistance = Distance
-                                 SeenEnemies[Enemy] = true
                               end
                            end
                         end
@@ -1027,7 +1036,7 @@ spawn(function()
                end
             end
 
-            -- Search boss arenas
+            -- search boss arenas
             for _, BossArenaFolder in ipairs(Workspace.BossArenas:GetChildren()) do
                local BossArenaEnemiesFolder = BossArenaFolder:FindFirstChild("Enemies")
                if BossArenaEnemiesFolder then
@@ -1047,11 +1056,10 @@ spawn(function()
                                  TargetEnemy = Enemy
                                  TargetDistance = Distance
                               end
-                           elseif AutoFarmTarget == "NotHitBefore" then
-                              if not SeenEnemies[Enemy] and Distance < SpellRange then
+                           elseif AutoFarmTarget == "Never Hit" then
+                              if HitEnemies[Enemy] == nil and Distance < TargetDistance and Distance < SpellRange then
                                  TargetEnemy = Enemy
                                  TargetDistance = Distance
-                                 SeenEnemies[Enemy] = true
                               end
                            end
                         end
@@ -1060,20 +1068,17 @@ spawn(function()
                end
             end
          end
-
-         -- check if enemy is dead
-         if TargetEnemy then
-            if not TargetEnemy.Parent then
-               SeenEnemies[TargetEnemy] = nil -- Remove the enemy from the SeenEnemies list
-            end
-         end
+         
 
          -- perform attack
          if TargetEnemy and TargetDistance < SpellRange then
+         print("attack")
             if AutoFarmQuestToggle then 
                game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer("CJ:4") 
             end
             game:GetService("ReplicatedStorage").Remote.CastSpell:FireServer(SpellState, TargetEnemy)
+            -- log hit enemy
+            HitEnemies[TargetEnemy] = true
             SpellState = SpellState == 1 and 2 or 1 -- toggle between 1 and 2
          end
       end
