@@ -13,7 +13,9 @@ local Humanoid = Player.Character:WaitForChild("Humanoid")
 local RootPart = Player.Character:WaitForChild("HumanoidRootPart")
 local Workspace = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
-local PickupGuiContainer = Player.PlayerGui.GameGui.Pickup
+local GameGUI =  Player.PlayerGui.GameGui
+local Black = GameGUI:FindFirstChild("Black")
+local PickupGuiContainer = GameGUI.Pickup
 local Level, Arena, PlayerPos
 local SpellState = 1
 local SelectedPet = 0
@@ -39,6 +41,8 @@ local ChestOptions = {
 local SelectedChestName = "Training Area Chest"
 local SelectedChest = "Chest1"
 local AutoRerollToggle = false
+local HomeTPBlack = false
+local LocationTPBlack = false
 local SelectedQuest = "LJ:1"
 local AutoQuestToggle = false
 local HPot, MPot
@@ -114,6 +118,7 @@ local AutoFarmEnemyNames = {"[1] Training Dummy"}
 local AutoFarmEnemies = {"Dummy"}
 local AutoFarmTarget = "Closest"
 local HitEnemies = {}
+local ConnectedEnemyFolders = {}
 local AutoFarmDelay = 2.2
 local AutoFarmQuestToggle = false
 local AutoRechargeToggle = false
@@ -146,7 +151,7 @@ local Window = Rayfield:CreateWindow({
    ConfigurationSaving = {
       Enabled = true,
       FolderName = "wizardsimulatorgui", -- Create a custom folder for your hub/game
-      FileName = "wizardsimulator_config"
+      FileName = "wizardsimulatorgui_config"
    },
    Discord = { 
       Enabled = false,
@@ -330,6 +335,26 @@ local QOLToggle1 = QOLTab:CreateToggle({
    Flag = "QOLToggle1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Value)
       AutoRerollToggle = Value
+   end,
+})
+
+local QOLSection3 = QOLTab:CreateSection("GUI Blockers")
+
+local QOLToggle2 = QOLTab:CreateToggle({
+   Name = "Remove Home TP Black Screen",
+   CurrentValue = false,
+   Flag = "QOLToggle2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Value)
+      HomeTPBlack = Value
+   end,
+})
+
+local QOLToggle3 = QOLTab:CreateToggle({
+   Name = "Remove Location TP Black Screen",
+   CurrentValue = false,
+   Flag = "Toggle3", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Value)
+      LocationTPBlack = Value
    end,
 })
 
@@ -659,6 +684,21 @@ local AutoFarmDropdown2 = AutoFarmTab:CreateDropdown({
    end,
 })
 
+local AutoFarmButton1 = AutoFarmTab:CreateButton({
+   Name = "Clear Hit Enemies",
+   Callback = function()
+      HitEnemies = {}
+      Rayfield:Notify({
+         Title = "Clear Hit Enemies",
+         Content = "All tracked enemies cleared. This is really useful because this script tries to attack enemies through walls, and does not regiter if they are actually hit.",
+         Duration = 5,
+         Image = nil,
+         Actions = { -- Notification Buttons
+         },
+      })
+   end,
+})
+
 local AutoFarmParagraph2 = AutoFarmTab:CreateParagraph({Title = "Spell Delay", Content = "Spell Delay is the amount of time to cycle through ONE of your spells, so the amount of time to recharge the spell. You should have the same spell in both slots."})
 
 local AutoFarmSlider1 = AutoFarmTab:CreateSlider({
@@ -742,11 +782,6 @@ local TrackerButton1 = TrackerTab:CreateButton({
          Duration = 5,
          Image = nil,
          Actions = { -- Notification Buttons
-            Ignore = {
-               Name = "OK",
-               Callback = function()
-               end
-            },
          },
       })
    end,
@@ -783,11 +818,6 @@ local TrackerButton1 = TrackerTab:CreateButton({
          Duration = 5,
          Image = nil,
          Actions = { -- Notification Buttons
-            Ignore = {
-               Name = "OK",
-               Callback = function()
-               end
-            },
          },
       })
    end,
@@ -902,6 +932,18 @@ local DebugButton1 = DebugTab:CreateButton({
    end,
 })
 
+local DebugButton2 = DebugTab:CreateButton({
+   Name = "Dump HitEnemies",
+   Callback = function()
+      print("Dumping HitEnemies Table")
+      for i, v in pairs(HitEnemies) do
+         print(i)
+         print(v)
+      end
+      print("Done")
+   end,
+})
+
 print("[WSG] Loading Scripts")
 
 -- level and position
@@ -938,6 +980,20 @@ spawn(function()
    end
 end)
 
+-- home TP black
+GameGUI.ChildAdded:Connect(function(Object)
+   if Object.Name == "Frame" and HomeTPBlack == true then
+      Object.Visible = false
+   end
+end)
+
+
+-- location TP black
+Black.ChildAdded:Connect(function()
+   if LocationTPBlack == true then
+      Black.Visible = false
+   end
+end)
 
 -- health detector
 Humanoid.HealthChanged:Connect(function()
@@ -988,18 +1044,17 @@ end)
 
 
 -- autofarm
+local function ConnectEnemyRemoved(Folder)
+   if Folder and not ConnectedEnemyFolders[Folder] then
+      ConnectedEnemyFolders[Folder] = Folder.ChildRemoved:Connect(function(DeletedEnemy)
+         HitEnemies[DeletedEnemy] = nil
+      end)
+   end
+end
+
 spawn(function()
    while wait(AutoFarmDelay/2) do
       if PlayerPos and AutoFarmToggle then
-
-         -- clean up hit enemies
-         if HitEnemies then
-            for HitEnemy, _ in pairs(HitEnemies) do
-               if not HitEnemy.Parent then
-                  HitEnemies[HitEnemy] = nil
-               end
-            end
-         end
          
          local TargetEnemy = nil
          local TargetDistance = AutoFarmTarget == "Farthest" and 0 or math.huge -- if targetting farthest default is 0, otherwise its math.huge
@@ -1008,6 +1063,7 @@ spawn(function()
             for _, LevelFolder in ipairs(Workspace.Levels:GetChildren()) do
                local LevelEnemiesFolder = LevelFolder:FindFirstChild("Enemies")
                if LevelEnemiesFolder then
+                  ConnectEnemyRemoved(LevelEnemiesFolder)
                   for _, Enemy in ipairs(LevelEnemiesFolder:GetChildren()) do
                      if Enemy.Name == EnemyName then
                         local EnemyPos = Enemy.PrimaryPart and Enemy.PrimaryPart.Position
@@ -1040,6 +1096,7 @@ spawn(function()
             for _, BossArenaFolder in ipairs(Workspace.BossArenas:GetChildren()) do
                local BossArenaEnemiesFolder = BossArenaFolder:FindFirstChild("Enemies")
                if BossArenaEnemiesFolder then
+                  ConnectEnemyRemoved(BossArenaEnemiesFolder)
                   for _, Enemy in ipairs(BossArenaEnemiesFolder:GetChildren()) do
                      if Enemy.Name == EnemyName then
                         local EnemyPos = Enemy.PrimaryPart and Enemy.PrimaryPart.Position
@@ -1072,13 +1129,12 @@ spawn(function()
 
          -- perform attack
          if TargetEnemy and TargetDistance < SpellRange then
-         print("attack")
             if AutoFarmQuestToggle then 
                game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer("CJ:4") 
             end
             game:GetService("ReplicatedStorage").Remote.CastSpell:FireServer(SpellState, TargetEnemy)
             -- log hit enemy
-            HitEnemies[TargetEnemy] = true
+            if AutoFarmTarget == "Never Hit" then HitEnemies[TargetEnemy] = "hit" end
             SpellState = SpellState == 1 and 2 or 1 -- toggle between 1 and 2
          end
       end
@@ -1198,8 +1254,6 @@ spawn(function()
       end
    end
 end)
-
-
 
 -- walkspeed and jumppower management
 spawn(function()
