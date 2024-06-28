@@ -48,7 +48,8 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/P3nguinMinecraft/Wiza
 ### Made using Rayfield, a Roblox GUI library.
 ### Uses many external universal scripts such as
 #### Infinite Yield
-#### Simple Spy
+#### Simple Spy v2.2
+#### Simple Spy v3
 #### orca
 #### CMD-X
 #### Dex Explorer
