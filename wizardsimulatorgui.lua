@@ -690,7 +690,7 @@ local AutoFarmButton1 = AutoFarmTab:CreateButton({
       HitEnemies = {}
       Rayfield:Notify({
          Title = "Clear Hit Enemies",
-         Content = "All tracked enemies cleared. This is really useful because this script tries to attack enemies through walls, and does not regiter if they are actually hit.",
+         Content = "All tracked enemies cleared. This is really useful because this script tries to attack enemies through walls, and does not register if they are actually hit.",
          Duration = 5,
          Image = nil,
          Actions = { -- Notification Buttons
@@ -941,6 +941,13 @@ local DebugButton2 = DebugTab:CreateButton({
          print(v)
       end
       print("Done")
+   end,
+})
+
+local DebugButton3 = DebugTab:CreateButton({
+   Name = "Kill GUI",
+   Callback = function()
+      Rayfield:Destroy()
    end,
 })
 
