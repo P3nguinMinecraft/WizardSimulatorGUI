@@ -913,7 +913,29 @@ local ToolButton5 = ToolTab:CreateButton({
 local ToolButton6 = ToolTab:CreateButton({
    Name = "Dex",
    Callback = function()
-      loadstring(game:HttpGet('https://ithinkimandrew.site/scripts/tools/dark-dex.lua'))()
+      loadstring(game:GetObjects("rbxassetid://418957341")[1].Source)()
+   end,
+})
+
+local ToolButton7 = ToolTab:CreateButton({
+   Name = "Dex Mobile",
+   Callback = function()
+      loadstring(game:HttpGet("https://raw.githubusercontent.com/Babyhamsta/RBLX_Scripts/refs/heads/main/Universal/BypassedDarkDexV3.lua", true))()
+   end,
+})
+
+print("[WSG] Loading Options Tab")
+
+local OptionsTab = Window:CreateTab("Options", nil) -- Title, Image
+
+local OptionsDropdown1 = OptionsTab:CreateDropdown({
+   Name = "Themes",
+   Options = {"Ocean","Default","AmberGlow","Amethyst","Bloom","DarkBlue","Green","Light"},
+   CurrentOption = {"Ocean"},
+   MultipleOptions = false,
+   Flag = "OptionsDropdown1",
+   Callback = function(Options)
+      Window.ModifyTheme(Options[1])
    end,
 })
 
