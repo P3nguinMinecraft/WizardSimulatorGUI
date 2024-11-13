@@ -930,8 +930,8 @@ local OptionsTab = Window:CreateTab("Options", nil) -- Title, Image
 
 local OptionsDropdown1 = OptionsTab:CreateDropdown({
    Name = "Themes",
-   Options = {"Ocean","Default","AmberGlow","Amethyst","Bloom","DarkBlue","Green","Light"},
-   CurrentOption = {"Ocean"},
+   Options = {"Default","AmberGlow","Amethyst","Bloom","DarkBlue","Green","Light","Ocean","Serenity"},
+   CurrentOption = {"Default"},
    MultipleOptions = false,
    Flag = "OptionsDropdown1",
    Callback = function(Options)
