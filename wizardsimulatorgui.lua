@@ -176,7 +176,7 @@ local CreditTab = Window:CreateTab("Info", nil) -- Title, Image
 
 local CreditLabel1 = CreditTab:CreateLabel("Developed by penguin586970")
 
-local CreditLabel2 = CreditTab:CreateLabel("Executor used: MacSploit (not affiliated!)")
+local CreditLabel2 = CreditTab:CreateLabel("Executor used for development: MacSploit, Delta (not affiliated!)")
 
 local CreditLabel3 = CreditTab:CreateLabel("For questions, concerns, contact windows1267 on discord")
 
