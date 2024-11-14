@@ -981,6 +981,8 @@ local DebugButton4 = DebugTab:CreateButton({
       Player.Character:SetPrimaryPartCFrame(forestspawn)
       wait(1)
       Player.Character:SetPrimaryPartCFrame(originalpos)
+      wait(0.1)
+      Player.Character:SetPrimaryPartCFrame(originalpos)
       --Player.Character:SetPrimaryPartCFrame(CFrame.new(Vector3.new(898.3, 4.5, -399)))
    end,
 })
