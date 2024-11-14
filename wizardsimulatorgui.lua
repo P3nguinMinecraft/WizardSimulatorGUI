@@ -1,5 +1,5 @@
 -- Check out my GitHub! https://github.com/P3nguinMinecraft/WizardSimulatorGUI/
--- game:GetService("Players").LocalPlayer.Character.PrimaryPart.Position = {898.3, 4, -399} works best with autofarm dummy so you won't be seen (using fly and noclip)
+-- game:GetService("Players").LocalPlayer.Character.PrimaryPart.Position = Vector3.new(898.3, 4, -399) works best with autofarm dummy so you won't be seen (using fly and noclip)
 
 print("[WSG] Loading Wizard Simulator GUI")
 
@@ -976,7 +976,7 @@ local DebugButton3 = DebugTab:CreateButton({
 local DebugButton4 = DebugTab:CreateButton({
    Name = "Teleport to Position",
    Callback = function()
-      game:GetService("Players").LocalPlayer.Character.PrimaryPart.Position = {898.3, 4, -399}
+      game:GetService("Players").LocalPlayer.Character.PrimaryPart.Position = Vector3.new(898.3, 4, -399)
    end,
 })
 
