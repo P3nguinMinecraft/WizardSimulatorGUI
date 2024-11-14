@@ -1174,8 +1174,10 @@ end)
 -- auto recharge
 spawn(function()
    while wait(0.1) do
-      --if AutoRechargeToggle == true and ManaPercentage < 30 then game:GetService("ReplicatedStorage").Remote.Recharge:FireServer() end
-      RefillMana()
+      if AutoRechargeToggle == true and ManaPercentage < 30 then 
+         --game:GetService("ReplicatedStorage").Remote.Recharge:FireServer() 
+         RefillMana();
+      end
    end
 end)
 
