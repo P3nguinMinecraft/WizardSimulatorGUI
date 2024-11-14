@@ -1,5 +1,6 @@
 # WizardSimulatorGUI
 ## Roblox Wizard Simulator GUI (this is a cheat/exploit)
+Uses Rayfield GUI Library (https://docs.sirius.menu/rayfield)
 
 # I am not responsible for any actions caused by the use of this script.
 
@@ -52,4 +53,5 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/P3nguinMinecraft/Wiza
 #### Simple Spy v3
 #### orca
 #### CMD-X
-#### Dex Explorer
+#### Dex v4
+#### Dark Dex Mobile (Modded DDex v3)
