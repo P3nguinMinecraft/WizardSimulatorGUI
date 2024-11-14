@@ -976,15 +976,7 @@ local DebugButton3 = DebugTab:CreateButton({
 local DebugButton4 = DebugTab:CreateButton({
    Name = "Teleport to Position",
    Callback = function()
-      local originalpos = Player.Character.PrimaryPart.CFrame
-      local forestspawn = CFrame.new(Vector3.new(931.232, 4.01377, -243.65))
-      Player.Character:SetPrimaryPartCFrame(forestspawn)
-      wait(1)
-      for i = 10, 1, -1
-      Player.Character:SetPrimaryPartCFrame(originalpos)
-      wait(0.1)
-      end
-      --Player.Character:SetPrimaryPartCFrame(CFrame.new(Vector3.new(898.3, 4.5, -399)))
+      Player.Character:SetPrimaryPartCFrame(CFrame.new(Vector3.new(898.3, 4.5, -399)))
    end,
 })
 
