@@ -1309,6 +1309,7 @@ end)
 function RefillMana()
    if not level == "Boss" then
       game:GetService("ReplicatedStorage").Remote.TouchedRecharge:FireServer(Workspace.Levels.level:WaitForChild("SpawnPoint"))
+      print("test!")
    end
 end
 
