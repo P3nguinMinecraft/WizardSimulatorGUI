@@ -352,7 +352,7 @@ local QOLToggle2 = QOLTab:CreateToggle({
 local QOLToggle3 = QOLTab:CreateToggle({
    Name = "Remove Location TP Black Screen",
    CurrentValue = false,
-   Flag = "Toggle3", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "QOLToggle3", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Value)
       LocationTPBlack = Value
    end,
@@ -911,14 +911,14 @@ local ToolButton5 = ToolTab:CreateButton({
 })
 
 local ToolButton6 = ToolTab:CreateButton({
-   Name = "Dex",
+   Name = "Dex v4",
    Callback = function()
       loadstring(game:GetObjects("rbxassetid://418957341")[1].Source)()
    end,
 })
 
 local ToolButton7 = ToolTab:CreateButton({
-   Name = "Dex Mobile",
+   Name = "Dark Dex Mobile (Modded DDex v3)",
    Callback = function()
       loadstring(game:HttpGet("https://raw.githubusercontent.com/Babyhamsta/RBLX_Scripts/refs/heads/main/Universal/BypassedDarkDexV3.lua", true))()
    end,
@@ -1174,7 +1174,8 @@ end)
 -- auto recharge
 spawn(function()
    while wait(0.1) do
-      if AutoRechargeToggle == true and ManaPercentage < 30 then game:GetService("ReplicatedStorage").Remote.Recharge:FireServer() end
+      --if AutoRechargeToggle == true and ManaPercentage < 30 then game:GetService("ReplicatedStorage").Remote.Recharge:FireServer() end
+      RefillMana()
    end
 end)
 
@@ -1303,6 +1304,13 @@ spawn(function()
       JumpPowerToggleOld = JumpPowerToggle
    end
 end)
+
+-- refill mana
+function RefillMana()
+   if not level == "Boss" then
+      game:GetService("ReplicatedStorage").Remote.TouchedRecharge:FireServer(Workspace.Levels.level:WaitForChild("SpawnPoint"))
+   end
+end
 
 
 print("[WSG] Loaded!")
