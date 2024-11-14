@@ -741,7 +741,7 @@ local AutoFarmToggle2 = AutoFarmTab:CreateToggle({
 local AutoFarmToggle3 = AutoFarmTab:CreateToggle({
    Name = "Auto Recharge at 30% (I think it requires gamepass)",
    CurrentValue = false,
-   Flag = "AFToggle3", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "AutoFarmToggle3", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Value)
       AutoRechargeToggle = Value
    end,
