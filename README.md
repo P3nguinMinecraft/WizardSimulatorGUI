@@ -1,6 +1,5 @@
 # WizardSimulatorGUI
 ## Roblox Wizard Simulator GUI (this is a cheat/exploit)
-Uses Rayfield GUI Library (https://docs.sirius.menu/rayfield)
 
 # I am not responsible for any actions caused by the use of this script.
 
@@ -46,7 +45,8 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/P3nguinMinecraft/Wiza
 ##### idk how to change the keybind ingame so its quite unusable right now
 
 ## Credits
-### Made using Rayfield, a Roblox GUI library.
+### Made using Rayfield, a Roblox GUI library 
+https://docs.sirius.menu/rayfield
 ### Uses many external universal scripts such as
 #### Infinite Yield
 #### Simple Spy v2.2
