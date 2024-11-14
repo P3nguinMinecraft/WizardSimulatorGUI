@@ -976,7 +976,7 @@ local DebugButton3 = DebugTab:CreateButton({
 local DebugButton4 = DebugTab:CreateButton({
    Name = "Teleport to Position",
    Callback = function()
-      Player.Character:SetPrimaryPartCFrame(CFrame.new(Vector3.new(898.3, 4.5, -399)))
+      Player.Character:SetPrimaryPartCFrame(CFrame.new(Vector3.new(903, 4.1, -400)))
    end,
 })
 
