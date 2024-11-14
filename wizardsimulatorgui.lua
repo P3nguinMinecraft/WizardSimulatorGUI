@@ -973,6 +973,20 @@ local DebugButton3 = DebugTab:CreateButton({
    end,
 })
 
+local DebugButton4 = DebugTab:CreateButton({
+   Name = "Teleport to Position",
+   Callback = function()
+      game:GetService("Players").LocalPlayer.Character.PrimaryPart.Position = {898.3, 4, -399}
+   end,
+})
+
+local DebugButton5 = DebugTab:CreateButton({
+   Name = "Print in console",
+   Callback = function()
+      print("hi")
+   end,
+})
+
 print("[WSG] Loading Scripts")
 
 -- level and position
