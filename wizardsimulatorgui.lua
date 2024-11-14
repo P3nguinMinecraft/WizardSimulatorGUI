@@ -913,14 +913,14 @@ local ToolButton5 = ToolTab:CreateButton({
 local ToolButton6 = ToolTab:CreateButton({
    Name = "Dex v4",
    Callback = function()
-      loadstring(game:GetObjects("rbxassetid://418957341")[1].Source)()
+      loadstring(game:GetObjects("rbxassetid://418957341")[1].Source)() -- Credit: Dex v4
    end,
 })
 
 local ToolButton7 = ToolTab:CreateButton({
    Name = "Dark Dex Mobile (Modded DDex v3)",
    Callback = function()
-      loadstring(game:HttpGet("https://raw.githubusercontent.com/Babyhamsta/RBLX_Scripts/refs/heads/main/Universal/BypassedDarkDexV3.lua", true))()
+      loadstring(game:HttpGet("https://raw.githubusercontent.com/Babyhamsta/RBLX_Scripts/refs/heads/main/Universal/BypassedDarkDexV3.lua", true))() -- Credit: Modded Dark Dex v3 by Babyhamsta
    end,
 })
 
