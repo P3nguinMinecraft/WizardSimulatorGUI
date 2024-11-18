@@ -1189,8 +1189,8 @@ end)
 spawn(function()
    while wait(0.1) do
       if AutoRechargeToggle == true and ManaPercentage < 30 then 
-         --game:GetService("ReplicatedStorage").Remote.Recharge:FireServer() 
-         RefillMana();
+         game:GetService("ReplicatedStorage").Remote.Recharge:FireServer() 
+         --RefillMana();
       end
    end
 end)
@@ -1321,7 +1321,7 @@ spawn(function()
    end
 end)
 
--- refill mana
+-- refill mana (doesnt work rn)
 function RefillMana()
    if not level == "Boss" then
       game:GetService("ReplicatedStorage").Remote.TouchedRecharge:FireServer(Workspace.Levels.level:WaitForChild("SpawnPoint"))
