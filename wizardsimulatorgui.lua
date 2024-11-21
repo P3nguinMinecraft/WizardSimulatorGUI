@@ -141,6 +141,9 @@ local WalkspeedToggle = false
 local Walkspeed = 16
 local JumpPowerToggle = false
 local JumpPower = 50
+local NoSlow = false
+local ApplyNoSlow = false
+local NoSlowTimer = 0
 
 print("[WSG] Loading Window")
 
@@ -355,6 +358,15 @@ local QOLToggle3 = QOLTab:CreateToggle({
    Flag = "QOLToggle3", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Value)
       LocationTPBlack = Value
+   end,
+})
+
+local QOLToggle4 = QOLTab:CreateToggle({
+   Name = "Spell No Slow",
+   CurrentValue = false,
+   Flag = "QOLToggle4", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Callback = function(Value)
+      NoSlowToggle = Value
    end,
 })
 
@@ -578,7 +590,7 @@ local AutoFarmKeybind1 = AutoFarmTab:CreateKeybind({
       AutoFarmToggle1:Set(AutoFarmToggle)
       Rayfield:Notify({
          Title = "Auto Farm Keybind",
-         Content = AutoFarmToggle,
+         Content = "Toggled!",
          Duration = 5,
          Image = nil,
          Actions = { -- Notification Buttons
@@ -1325,9 +1337,39 @@ end)
 function RefillMana()
    if not level == "Boss" then
       game:GetService("ReplicatedStorage").Remote.TouchedRecharge:FireServer(Workspace.Levels.level:WaitForChild("SpawnPoint"))
-      print("test!")
    end
 end
+
+-- no slow activation and timer
+game:GetService("ReplicatedStorage").Remote.CastSpell.OnClientEvent:Connect(function(plr)
+   if plr == Player then
+      print("slowed")
+      NoSlowTimer = 9
+   end
+end)
+spawn(function()
+   while wait(0.1) do
+      if NoSlowTimer > 0 then
+         ApplyNoSlow = true
+         NoSlowTimer = NoSlowTimer - 1
+         if NoSlowTimer <= 0 then
+            ApplyNoSlow = false
+         end
+         wait(1)
+      end
+   end
+end)
+
+
+-- no slow management
+spawn(function()
+   while wait(0.1) do
+      if (ApplyNoSlow == true) then
+         Humanoid.WalkSpeed = 16
+         print("applied")
+      end
+   end
+end)
 
 
 print("[WSG] Loaded!")
