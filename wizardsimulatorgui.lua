@@ -1365,7 +1365,6 @@ spawn(function()
    while wait(0.01) do
       if (ApplyNoSlow == true) then
          Humanoid.WalkSpeed = 16
-         print("applied")
       end
    end
 end)
