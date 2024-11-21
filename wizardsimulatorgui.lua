@@ -1188,6 +1188,7 @@ spawn(function()
                game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer("CJ:4") 
             end
             game:GetService("ReplicatedStorage").Remote.CastSpell:FireServer(SpellState, TargetEnemy)
+            NoSlowTimer = 9
             -- log hit enemy
             if AutoFarmTarget == "Never Hit" then HitEnemies[TargetEnemy] = "hit" end
             SpellState = SpellState == 1 and 2 or 1 -- toggle between 1 and 2
@@ -1343,7 +1344,6 @@ end
 -- no slow activation and timer
 game:GetService("ReplicatedStorage").Remote.CastSpell.OnClientEvent:Connect(function(plr)
    if plr == Player then
-      print("slowed")
       NoSlowTimer = 9
    end
 end)
