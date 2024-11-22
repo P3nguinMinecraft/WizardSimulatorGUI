@@ -119,7 +119,7 @@ local AutoFarmEnemies = {"Dummy"}
 local AutoFarmTarget = "Closest"
 local HitEnemies = {}
 local ConnectedEnemyFolders = {}
-local AutoFarmDelay = 2.2
+local AutoFarmDelay = 0.5
 local AutoFarmQuestToggle = false
 local AutoRechargeToggle = false
 local SpellRange = 100
@@ -715,7 +715,7 @@ local AutoFarmParagraph2 = AutoFarmTab:CreateParagraph({Title = "Spell Delay", C
 
 local AutoFarmSlider1 = AutoFarmTab:CreateSlider({
    Name = "Spell Delay",
-   Range = {0, 10},
+   Range = {0, 20},
    Increment = 0.1,
    Suffix = "sec",
    CurrentValue = 0.5,
@@ -729,7 +729,7 @@ local AutoFarmParagraph3 = AutoFarmTab:CreateParagraph({Title = "Spell Range", C
 
 local AutoFarmSlider2 = AutoFarmTab:CreateSlider({
    Name = "Spell Range",
-   Range = {0, 200},
+   Range = {0, 150},
    Increment = 1,
    Suffix = "studs",
    CurrentValue = 85,
@@ -875,7 +875,7 @@ local ToolToggle2 = ToolTab:CreateToggle({
 
 local ToolSlider2 = ToolTab:CreateSlider({
    Name = "Jump Power",
-   Range = {0, 200},
+   Range = {0, 250},
    Increment = 1,
    Suffix = "Studs",
    CurrentValue = 50,
