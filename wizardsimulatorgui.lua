@@ -763,6 +763,24 @@ print("[WSG] Loading Tracker Tab")
 
 local TrackerTab = Window:CreateTab("Tracker", nil) -- Title, Image
 
+local TrackerButton1 = TrackerTab:CreateButton({
+   Name = "Reset Gold",
+   Callback = function()
+      TrackGold = not TrackGold
+      TrackXP = not TrackXP
+      TrackerToggle1:Set(TrackGold)
+      TrackerToggle2:Set(TrackXP)
+      Rayfield:Notify({
+         Title = "Tracker Toggle",
+         Content = "Toggled both Gold and XP trackers.",
+         Duration = 5,
+         Image = nil,
+         Actions = { -- Notification Buttons
+         },
+      })
+   end,
+})
+
 local TrackerSection1 = TrackerTab:CreateSection("Gold")
 
 local TrackerLabel1 = TrackerTab:CreateLabel("Tracked Gold: 0")
@@ -780,7 +798,7 @@ local TrackerToggle1 = TrackerTab:CreateToggle({
    end,
 })
 
-local TrackerButton1 = TrackerTab:CreateButton({
+local TrackerButton2 = TrackerTab:CreateButton({
    Name = "Reset Gold",
    Callback = function()
       TrackerLabel1:Set("Tracked Gold: 0")
@@ -816,7 +834,7 @@ local TrackerToggle2 = TrackerTab:CreateToggle({
    end,
 })
 
-local TrackerButton1 = TrackerTab:CreateButton({
+local TrackerButton3 = TrackerTab:CreateButton({
    Name = "Reset XP",
    Callback = function()
       TrackerLabel4:Set("Tracked XP: 0")
