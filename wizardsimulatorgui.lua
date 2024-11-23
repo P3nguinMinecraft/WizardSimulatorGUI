@@ -275,7 +275,7 @@ local QOLButton3 = QOLTab:CreateButton({
    Name = "Delete Pet",
    Callback = function()
       if SelectedPet and SelectedPet > 0 then
-         if DeletePetLockTimer == true then 
+         if DeletePetLockTimer > 0 then 
             game:GetService("ReplicatedStorage").Remote.DeletePet:FireServer(SelectedPet)
             if AutoRerollToggle == true then
                game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("OpenPetChest"):InvokeServer(SelectedChest)
