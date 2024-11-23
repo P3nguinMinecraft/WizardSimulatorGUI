@@ -274,7 +274,7 @@ local QOLParagraph2 = QOLTab:CreateParagraph({Title = "Delete Pet", Content = "S
 local QOLButton3 = QOLTab:CreateButton({
    Name = "Delete Pet",
    Callback = function()
-      if SelectedPet > 0 then
+      if SelectedPet and SelectedPet > 0 then
          if DeletePetLockTimer == true then 
             game:GetService("ReplicatedStorage").Remote.DeletePet:FireServer(SelectedPet)
             if AutoRerollToggle == true then
