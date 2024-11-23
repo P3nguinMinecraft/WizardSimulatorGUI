@@ -129,7 +129,7 @@ local TrackedGold = 0
 local TrackedXP = 0
 local TrackedGoldTimer = 0
 local TrackedXPTimer = 0
-local GoldMinutes, GoldSeconds, GoldDuration, GoldPerHour, XPMinutes, XPSeconds, XPDuration, XPPerHour
+local GoldHours, GoldMinutes, GoldSeconds, GoldDuration, GoldPerHour, XPHours, XPMinutes, XPSeconds, XPDuration, XPPerHour
 local Multipliers = {
    K = 1000, -- Thousand
    M = 1000000, -- Million
@@ -144,6 +144,8 @@ local JumpPower = 50
 local NoSlow = false
 local ApplyNoSlow = false
 local NoSlowTimer = 0
+local PlayerXPPercentage, PlayerLevel, PlayerTotalXP
+local LevelTimer, LevelMinutes, LevelSeconds, LevelHours, LevelDuration
 
 print("[WSG] Loading Window")
 
@@ -764,15 +766,29 @@ print("[WSG] Loading Tracker Tab")
 local TrackerTab = Window:CreateTab("Tracker", nil) -- Title, Image
 
 local TrackerButton1 = TrackerTab:CreateButton({
-   Name = "Reset Gold",
+   Name = "Toggle Trackers",
    Callback = function()
-      TrackGold = not TrackGold
-      TrackXP = not TrackXP
-      TrackerToggle1:Set(TrackGold)
-      TrackerToggle2:Set(TrackXP)
+      ToggleGold()
+      ToggleXP()
       Rayfield:Notify({
-         Title = "Tracker Toggle",
+         Title = "Toggle Trackers",
          Content = "Toggled both Gold and XP trackers.",
+         Duration = 5,
+         Image = nil,
+         Actions = { -- Notification Buttons
+         },
+      })
+   end,
+})
+
+local TrackerButton2 = TrackerTab:CreateButton({
+   Name = "Reset Trackers",
+   Callback = function()
+      ResetGold()
+      ResetXP()
+      Rayfield:Notify({
+         Title = "Reset Trackers",
+         Content = "Reset both Gold and XP trackers.",
          Duration = 5,
          Image = nil,
          Actions = { -- Notification Buttons
@@ -798,14 +814,10 @@ local TrackerToggle1 = TrackerTab:CreateToggle({
    end,
 })
 
-local TrackerButton2 = TrackerTab:CreateButton({
+local TrackerButton3 = TrackerTab:CreateButton({
    Name = "Reset Gold",
    Callback = function()
-      TrackerLabel1:Set("Tracked Gold: 0")
-      TrackedGold = 0
-      TrackerLabel2:Set("Tracked Duration: 0 seconds")
-      TrackedGoldTimer = 0
-      TrackerLabel3:Set("Gold/Hour: 0")
+      ResetGold()
       Rayfield:Notify({
          Title = "Reset Gold",
          Content = "Tracked Gold has been reset for this session.",
@@ -834,14 +846,10 @@ local TrackerToggle2 = TrackerTab:CreateToggle({
    end,
 })
 
-local TrackerButton3 = TrackerTab:CreateButton({
+local TrackerButton4 = TrackerTab:CreateButton({
    Name = "Reset XP",
    Callback = function()
-      TrackerLabel4:Set("Tracked XP: 0")
-      TrackedXP = 0
-      TrackerLabel5:Set("Tracked Duration: 0 seconds")
-      TrackedXPTimer = 0
-      TrackerLabel6:Set("XP/Hour: 0")
+      ResetXP()
       Rayfield:Notify({
          Title = "Reset XP",
          Content = "Tracked XP has been reset for this session.",
@@ -852,6 +860,18 @@ local TrackerButton3 = TrackerTab:CreateButton({
       })
    end,
 })
+
+local TrackerSection3 = TrackerTab:CreateSection("Levels")
+
+local TrackerLabel7 = TrackerTab:CreateSection("A more accurate display of leveling than the default GUI bar")
+
+local TrackerLabel8 = TrackerTab:CreateSection("Do note that these numbers are still a rough estimate")
+
+local TrackerLabel9 = TrackerTab:CreateLabel("Level: 0")
+
+local TrackerLabel10 = TrackerTab:CreateLabel("XP To Next Level: 0")
+
+local TrackerLabel11 = TrackerTab:CreateLabel("Time to Next Level: No Data")
 
 print("[WSG] Loading Tools Tab")
 
@@ -1227,7 +1247,12 @@ end)
 
 
 -- trackers
-local function ParseText(inputtext)
+local xpHistory = {}
+local goldHistory = {}
+local maxHistorySize = 10  -- Buffer size (10 seconds)
+local XPPerHour, GoldPerHour = 0, 0
+
+local function ParseTrackerText(inputtext)
    local amount, abbreviation, TextType = inputtext:match("([%d]*[%.]*[%d]*)%s*([kMB]?)%s*(%a*)")
    if not TextType or TextType == "" then
       TextType = "Gold"
@@ -1236,22 +1261,48 @@ local function ParseText(inputtext)
    local TotalAmount = tonumber(amount) * Multiplier
    return TotalAmount, TextType
 end
--- DIRECTORY FOR CODING PURPOSES: PickupGuiContainer (game.Players.LocalPlayer.PlayerGui.GameGui.Pickup).PickupFrame.Amount(text)
+
+-- PickupGuiContainer.ChildAdded handler
 PickupGuiContainer.ChildAdded:Connect(function(GuiFrame) 
    for _, TextLabel in ipairs(GuiFrame:GetChildren()) do
       if TextLabel.Name == "Amount" and TrackedElements[GuiFrame] ~= true then
-         wait(0.1) -- because if its instant the text is "Explosion" for some fucking reason
-         local Amount, Type = ParseText(TextLabel.Text)
-         -- update display here for now its just output
+         wait(0.1) -- wait for correct text
+         local Amount, Type = ParseTrackerText(TextLabel.Text)
+         
+         -- Update Gold or XP depending on the type
          if Type == "Gold" then
             if TrackGold == true then
                TrackedGold = TrackedGold + Amount
                TrackerLabel1:Set("Tracked Gold: " .. string.format("%0.0f", TrackedGold):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
+               
+               -- Smooth Gold per hour using rolling average
+               table.insert(goldHistory, Amount)
+               if #goldHistory > maxHistorySize then
+                  table.remove(goldHistory, 1)
+               end
+               GoldPerHour = 0
+               for _, gold in ipairs(goldHistory) do
+                  GoldPerHour = GoldPerHour + gold
+               end
+               GoldPerHour = math.floor((GoldPerHour / #goldHistory) * 3600)
+               TrackerLabel3:Set("Gold/Hour: " .. string.format("%0.0f", GoldPerHour):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
             end
          elseif Type == "XP" then
             if TrackXP == true then
                TrackedXP = TrackedXP + Amount
                TrackerLabel4:Set("Tracked XP: " .. string.format("%0.0f", TrackedXP):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
+               
+               -- Smooth XP per hour using rolling average
+               table.insert(xpHistory, Amount)
+               if #xpHistory > maxHistorySize then
+                  table.remove(xpHistory, 1)
+               end
+               XPPerHour = 0
+               for _, xp in ipairs(xpHistory) do
+                  XPPerHour = XPPerHour + xp
+               end
+               XPPerHour = math.floor((XPPerHour / #xpHistory) * 3600)
+               TrackerLabel6:Set("XP/Hour: " .. string.format("%0.0f", XPPerHour):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
             end
          else
             Rayfield:Notify({
@@ -1259,7 +1310,7 @@ PickupGuiContainer.ChildAdded:Connect(function(GuiFrame)
                Content = "Statistic type is not 'Gold' or 'XP'! How did this happen?",
                Duration = 5,
                Image = nil,
-               Actions = { -- Notification Buttons
+               Actions = {
                   Ignore = {
                      Name = "Debug",
                      Callback = function()
@@ -1275,7 +1326,7 @@ PickupGuiContainer.ChildAdded:Connect(function(GuiFrame)
             })
          end
 
-         -- tracked deletion
+         -- Mark this GuiFrame as tracked
          TrackedElements[GuiFrame] = true
          GuiFrame.AncestryChanged:Connect(function(_, parent)
             if parent == nil then
@@ -1287,49 +1338,45 @@ PickupGuiContainer.ChildAdded:Connect(function(GuiFrame)
    end
 end)
 
-
--- tracker timer
+-- Tracker timer
 spawn(function()
    while wait(1) do
       if TrackGold == true then
          TrackedGoldTimer = TrackedGoldTimer + 1
-         GoldMinutes = math.floor(TrackedGoldTimer / 60)
-         GoldSeconds = TrackedGoldTimer % 60
-         if GoldMinutes > 0 then
-            GoldDuration = GoldMinutes .. " minutes and " .. GoldSeconds .. " seconds"
-         else
-            GoldDuration = GoldSeconds .. " seconds"
-         end
-         TrackerLabel2:Set("Tracked Duration: " .. GoldDuration)
+         GoldHours = math.floor(TrackedGoldTimer / 3600)
+         GoldMinutes = math.floor((TrackedGoldTimer % 3600) / 60)
+         GoldSeconds = TrackedGoldTimer % 60 
 
-         if TrackedGoldTimer > 0 then
-            GoldPerHour = math.floor(TrackedGold / (TrackedGoldTimer / 3600))
+         if GoldHours > 0 then
+            GoldDuration = GoldHours .. " hour(s), " .. GoldMinutes .. " minute(s), and " .. GoldSeconds .. " second(s)"
+         elseif GoldMinutes > 0 then
+            GoldDuration = GoldMinutes .. " minute(s) and " .. GoldSeconds .. " second(s)"
          else
-            GoldPerHour = nil
+            GoldDuration = GoldSeconds .. " second(s)"
          end
-         TrackerLabel3:Set("Gold/Hour: " .. string.format("%0.0f", GoldPerHour):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
+
+         TrackerLabel2:Set("Tracked Duration: " .. GoldDuration)
       end
 
       if TrackXP == true then
          TrackedXPTimer = TrackedXPTimer + 1
-         XPMinutes = math.floor(TrackedXPTimer / 60)
-         XPSeconds = TrackedXPTimer % 60
-         if XPMinutes > 0 then
-            XPDuration = XPMinutes .. " minutes and " .. XPSeconds .. " seconds"
-         else
-            XPDuration = XPSeconds .. " seconds"
-         end
-         TrackerLabel5:Set("Tracked Duration: " .. XPDuration)
+         XPHours = math.floor(TrackedXPTimer / 3600)
+         XPMinutes = math.floor((TrackedXPTimer % 3600) / 60)
+         XPSeconds = TrackedXPTimer % 60 
 
-         if TrackedXPTimer > 0 then
-            XPPerHour = math.floor(TrackedXP / (TrackedXPTimer / 3600))
+         if XPHours > 0 then
+            XPDuration = XPHours .. " hour(s), " .. XPMinutes .. " minute(s), and " .. XPSeconds .. " second(s)"
+         elseif XPMinutes > 0 then
+            XPDuration = XPMinutes .. " minute(s) and " .. XPSeconds .. " second(s)"
          else
-            XPPerHour = nil
+            XPDuration = XPSeconds .. " second(s)"
          end
-         TrackerLabel6:Set("XP/Hour: " .. string.format("%0.0f", XPPerHour):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
+
+         TrackerLabel5:Set("Tracked Duration: " .. XPDuration)
       end
    end
 end)
+
 
 -- walkspeed and jumppower management
 spawn(function()
@@ -1387,5 +1434,113 @@ spawn(function()
    end
 end)
 
+
+-- toggle and reset trackers
+function ToggleGold()
+   TrackGold = not TrackGold
+   TrackerToggle1:Set(TrackGold)
+end
+
+function ToggleXP()
+   TrackXP = not TrackXP
+   TrackerToggle2:Set(TrackXP)
+end
+
+function ResetGold()
+   TrackerLabel1:Set("Tracked Gold: 0")
+   TrackedGold = 0
+   TrackerLabel2:Set("Tracked Duration: 0 seconds")
+   TrackedGoldTimer = 0
+   TrackerLabel3:Set("Gold/Hour: 0")
+   goldHistory = {}
+   GoldPerHour = 0
+end
+
+function ResetXP()
+   TrackerLabel4:Set("Tracked XP: 0")
+   TrackedXP = 0
+   TrackerLabel5:Set("Tracked Duration: 0 seconds")
+   TrackedXPTimer = 0
+   TrackerLabel6:Set("XP/Hour: 0")
+   xpHistory = {}
+   XPPerHour = 0   
+end
+
+-- xp stats
+local function ParseTotalXPValue(value)
+   local number, unit = value:match("([%d%.]+)([KMBT]?)")
+   number = tonumber(number)
+
+   if unit == "K" then
+       number = number * 1e3 -- Thousand
+   elseif unit == "M" then
+       number = number * 1e6 -- Million
+   elseif unit == "B" then
+       number = number * 1e9 -- Billion
+   elseif unit == "T" then
+       number = number * 1e12 -- Trillion
+   end
+
+   return number
+end
+
+-- unused rn
+local function FormatValue(number)
+    local unit = ""
+    local formattedValue = number
+
+    if number >= 1e12 then
+        unit = "T"  -- Trillion
+        formattedValue = number / 1e12
+    elseif number >= 1e9 then
+        unit = "B"  -- Billion
+        formattedValue = number / 1e9
+    elseif number >= 1e6 then
+        unit = "M"  -- Million
+        formattedValue = number / 1e6
+    elseif number >= 1e3 then
+        unit = "K"  -- Thousand
+        formattedValue = number / 1e3
+    end
+
+    formattedValue = string.format("%.6g", formattedValue)
+
+    return formattedValue .. unit
+end
+
+
+spawn(function()
+   while wait(1) do
+      local XPBar = GameGUI.Stats.ExperienceOutside.Bar
+      local XPText = GameGUI.Stats.ExperienceOutside.Amount
+      if XPBar and XPText then
+         PlayerLevel = Player.leaderstats.Level.Value
+         TrackerLabel9:Set("Level: " .. PlayerLevel)
+         PlayerXPPercentage = XPBar.Size.X.Scale
+         PlayerTotalXP = ParseTotalXPValue(XPText.Text)
+         local MissingXP = round((1 - PlayerXPPercentage) * PlayerTotalXP)
+         TrackerLabel10:Set("XP To Next Level: " .. string.format("%0.0f", MissingXP):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
+         if XPPerHour > 0 then
+            LevelTimer = round(MissingXP / XPPerHour * 3600)
+            LevelHours = math.floor(LevelTimer / 3600)
+            LevelMinutes = math.floor((LevelTimer % 3600) / 60)
+            LevelSeconds = LevelTimer % 60 
+
+            if LevelHours > 0 then
+               LevelDuration = LevelHours .. " hour(s), " .. LevelMinutes .. " minute(s), and " .. LevelSeconds .. " second(s)"
+            elseif LevelMinutes > 0 then
+               LevelDuration = LevelMinutes .. " minute(s) and " .. LevelSeconds .. " second(s)"
+            else
+               LevelDuration = LevelSeconds .. " second(s)"
+            end
+
+            TrackerLabel11:Set("Time To Next Level: " .. LevelDuration)
+         end
+      end
+      if XPPerHour <= 0 then
+         TrackerLabel11:Set("Time To Next Level: No Data")
+      end
+   end
+end)
 
 print("[WSG] Loaded!")
