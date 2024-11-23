@@ -283,7 +283,7 @@ local QOLButton3 = QOLTab:CreateButton({
          else
             Rayfield:Notify({
                Title = "Delete Pet Lock",
-               Content = "Delete Pet Lock prevented you from deleting the selected pet. Press the button to disable it for 1 minute.",
+               Content = "Delete Pet Lock prevented you from deleting the selected pet. Press the button below to disable it for 1 minute.",
                Duration = 5,
                Image = nil,
                Actions = { -- Notification Buttons
@@ -306,6 +306,21 @@ local QOLButton3 = QOLTab:CreateButton({
             },
          })
       end
+   end,
+})
+
+local QOLButton4 = QOLTab:CreateButton({
+   Name = "Disable Delete Pet Lock",
+   Callback = function()
+      DeletePetLockTimer = 60
+      Rayfield:Notify({
+         Title = "Pet Lock Enabled",
+         Content = "You may now delete pets for 60 seconds!",
+         Duration = 5,
+         Image = nil,
+         Actions = { -- Notification Buttons
+         },
+      })
    end,
 })
 
@@ -337,10 +352,9 @@ local QOLDropdown2 = QOLTab:CreateDropdown({
    end,
 })
 
-local QOLButton4 = QOLTab:CreateButton({
+local QOLButton5 = QOLTab:CreateButton({
    Name = "Buy Chest",
    Callback = function()
-   print(SelectedChest)
       game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("OpenPetChest"):InvokeServer(SelectedChest)
    end,
 })
@@ -1281,17 +1295,11 @@ PickupGuiContainer.ChildAdded:Connect(function(GuiFrame)
             if TrackGold == true then
                TrackedGold = TrackedGold + Amount
                TrackerLabel1:Set("Tracked Gold: " .. string.format("%0.0f", TrackedGold):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
-
-               GoldPerHour = math.floor(TrackedGold / TrackedGoldTimer * 3600)
-               TrackerLabel3:Set("Gold/Hour: " .. string.format("%0.0f", GoldPerHour):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
             end
          elseif Type == "XP" then
             if TrackXP == true then
                TrackedXP = TrackedXP + Amount
                TrackerLabel4:Set("Tracked XP: " .. string.format("%0.0f", TrackedXP):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
-               
-               XPPerHour = math.floor(TrackedXP / TrackedXPTimer * 3600)
-               TrackerLabel6:Set("XP/Hour: " .. string.format("%0.0f", XPPerHour):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
             end
          else
             Rayfield:Notify({
@@ -1345,6 +1353,9 @@ spawn(function()
          end
 
          TrackerLabel2:Set("Tracked Duration: " .. GoldDurationString)
+
+         GoldPerHour = math.floor(TrackedGold / TrackedGoldTimer * 3600)
+         TrackerLabel3:Set("Gold/Hour: " .. string.format("%0.0f", GoldPerHour):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
       end
 
       if TrackXP == true then
@@ -1362,6 +1373,9 @@ spawn(function()
          end
 
          TrackerLabel5:Set("Tracked Duration: " .. XPDurationString)
+
+         XPPerHour = math.floor(TrackedXP / TrackedXPTimer * 3600)
+         TrackerLabel6:Set("XP/Hour: " .. string.format("%0.0f", XPPerHour):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
       end
    end
 end)
@@ -1507,7 +1521,7 @@ spawn(function()
          PlayerTotalXP = ParseTotalXPValue(XPText.Text)
          local MissingXP = round((1 - PlayerXPPercentage) * PlayerTotalXP)
          TrackerLabel10:Set("XP To Next Level: " .. string.format("%0.0f", MissingXP):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
-         if XPPerHour > 0 then
+         if XPPerHour and XPPerHour > 0 then
             LevelTimer = round(MissingXP / XPPerHour * 3600)
             LevelHours = math.floor(LevelTimer / 3600)
             LevelMinutes = math.floor((LevelTimer % 3600) / 60)
@@ -1524,7 +1538,7 @@ spawn(function()
             TrackerLabel11:Set("Time To Next Level: " .. LevelDuration)
          end
       end
-      if XPPerHour <= 0 then
+      if XPPerHour and XPPerHour <= 0 then
          TrackerLabel11:Set("Time To Next Level: No Data")
       end
    end
