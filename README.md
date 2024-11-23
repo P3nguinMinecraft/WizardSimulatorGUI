@@ -35,7 +35,8 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/P3nguinMinecraft/Wiza
 ##### Option to Recharge at 30% Mana (requires Gamepass I think)
 
 #### Tracker
-##### Tracks Gold and XP gains, resettable and togglable
+##### Tracks Gold and XP gains, resettable and togglable individually and together
+##### Displays Player Level, XP To Next Level (very rough estimate), and Time to Next Level based on data gathered from the XP tracker
 
 #### Tools
 ##### Walkspeed and Jump Power sliders/toggles
