@@ -18,7 +18,7 @@ local Black = GameGUI:FindFirstChild("Black")
 local PickupGuiContainer = GameGUI.Pickup
 local Level, Arena, PlayerPos
 local SpellState = 1
-local SelectedPet = 0
+local SelectedPet
 local PetSlotOptions = {
    [1] = "Main",
    [2] = "Secondary (gamepass)",
@@ -26,8 +26,7 @@ local PetSlotOptions = {
 }
 local SelectedPetSlotName
 local SelectedPetSlot = 1
-local DeletePetLock = false
-local DeletePetLockOld = false
+local DeletePetLockTimer = 0
 local ChestOptions = {
    ["Chest1"] = "Training Area Chest",
    ["Chest2"] = "Werewolf Chest",
@@ -129,7 +128,7 @@ local TrackedGold = 0
 local TrackedXP = 0
 local TrackedGoldTimer = 0
 local TrackedXPTimer = 0
-local GoldHours, GoldMinutes, GoldSeconds, GoldDuration, GoldPerHour, XPHours, XPMinutes, XPSeconds, XPDuration, XPPerHour
+local GoldHours, GoldMinutes, GoldSeconds, GoldDurationString, GoldPerHour, XPHours, XPMinutes, XPSeconds, XPDurationString, XPPerHour
 local Multipliers = {
    K = 1000, -- Thousand
    M = 1000000, -- Million
@@ -196,8 +195,11 @@ local QOLInput1 = QOLTab:CreateInput({
    PlaceholderText = "Order in the Pet Menu",
    RemoveTextAfterFocusLost = false,
    Callback = function(Text)
-      if tonumber(Text) ~= nil and tonumber(Text) > 0 then
+      local num = tonumber(Text)
+      if num ~= nil and num > 0 and math.floor(num) == num then
          SelectedPet = tonumber(Text)
+      elseif Text == "" then
+         SelectedPet = nil
       else
          Rayfield:Notify({
             Title = "Error",
@@ -272,24 +274,35 @@ local QOLParagraph2 = QOLTab:CreateParagraph({Title = "Delete Pet", Content = "S
 local QOLButton3 = QOLTab:CreateButton({
    Name = "Delete Pet",
    Callback = function()
-      if DeletePetLock == true then 
-         game:GetService("ReplicatedStorage").Remote.DeletePet:FireServer(SelectedPet)
-         if AutoRerollToggle == true then
-            game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("OpenPetChest"):InvokeServer(SelectedChest)
+      if SelectedPet > 0 then
+         if DeletePetLockTimer == true then 
+            game:GetService("ReplicatedStorage").Remote.DeletePet:FireServer(SelectedPet)
+            if AutoRerollToggle == true then
+               game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("OpenPetChest"):InvokeServer(SelectedChest)
+            end
+         else
+            Rayfield:Notify({
+               Title = "Delete Pet Lock",
+               Content = "Delete Pet Lock prevented you from deleting the selected pet. Press the button to disable it for 1 minute.",
+               Duration = 5,
+               Image = nil,
+               Actions = { -- Notification Buttons
+                  Ignore = {
+                     Name = "Disable Lock",
+                     Callback = function()
+                        DeletePetLockTimer = 60
+                     end
+                  },
+               },
+            })
          end
       else
          Rayfield:Notify({
-            Title = "Delete Pet Lock",
-            Content = "Delete Pet Lock prevented you from deleting SelectedPet. Press the button to disable it for 1 minute.",
+            Title = "No Pet Selected!",
+            Content = "You did not select a pet slot above!",
             Duration = 5,
             Image = nil,
             Actions = { -- Notification Buttons
-               Ignore = {
-                  Name = "Disable Lock",
-                  Callback = function()
-                     DeletePetLock = true
-                  end
-               },
             },
          })
       end
@@ -1064,12 +1077,10 @@ end)
 
 -- pet lock
 spawn(function()
-   while wait(0.1) do
-      if DeletePetLockOld ~= DeletePetLock then
-         wait(60)
-         DeletePetLock = false
+   while wait(1) do
+      if DeletePetLockTimer > 0 then
+         DeletePetLockTimer = DeletePetLockTimer - 1
       end
-      DeletePetLockOld = DeletePetLock
    end
 end)
 
@@ -1228,7 +1239,7 @@ spawn(function()
             game:GetService("ReplicatedStorage").Remote.CastSpell:FireServer(SpellState, TargetEnemy)
             -- log hit enemy
             if AutoFarmTarget == "Never Hit" then HitEnemies[TargetEnemy] = "hit" end
-            SpellState = SpellState == 1 and 2 or 1 -- toggle between 1 and 2
+            SpellState = 3 - SpellState -- toggle between 1 and 2
          end
       end
    end
@@ -1247,10 +1258,6 @@ end)
 
 
 -- trackers
-local xpHistory = {}
-local goldHistory = {}
-local maxHistorySize = 10  -- Buffer size (10 seconds)
-local XPPerHour, GoldPerHour = 0, 0
 
 local function ParseTrackerText(inputtext)
    local amount, abbreviation, TextType = inputtext:match("([%d]*[%.]*[%d]*)%s*([kMB]?)%s*(%a*)")
@@ -1274,17 +1281,8 @@ PickupGuiContainer.ChildAdded:Connect(function(GuiFrame)
             if TrackGold == true then
                TrackedGold = TrackedGold + Amount
                TrackerLabel1:Set("Tracked Gold: " .. string.format("%0.0f", TrackedGold):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
-               
-               -- Smooth Gold per hour using rolling average
-               table.insert(goldHistory, Amount)
-               if #goldHistory > maxHistorySize then
-                  table.remove(goldHistory, 1)
-               end
-               GoldPerHour = 0
-               for _, gold in ipairs(goldHistory) do
-                  GoldPerHour = GoldPerHour + gold
-               end
-               GoldPerHour = math.floor((GoldPerHour / #goldHistory) * 3600)
+
+               GoldPerHour = math.floor(TrackedGold / TrackedGoldTimer * 3600)
                TrackerLabel3:Set("Gold/Hour: " .. string.format("%0.0f", GoldPerHour):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
             end
          elseif Type == "XP" then
@@ -1292,16 +1290,7 @@ PickupGuiContainer.ChildAdded:Connect(function(GuiFrame)
                TrackedXP = TrackedXP + Amount
                TrackerLabel4:Set("Tracked XP: " .. string.format("%0.0f", TrackedXP):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
                
-               -- Smooth XP per hour using rolling average
-               table.insert(xpHistory, Amount)
-               if #xpHistory > maxHistorySize then
-                  table.remove(xpHistory, 1)
-               end
-               XPPerHour = 0
-               for _, xp in ipairs(xpHistory) do
-                  XPPerHour = XPPerHour + xp
-               end
-               XPPerHour = math.floor((XPPerHour / #xpHistory) * 3600)
+               XPPerHour = math.floor(TrackedXP / TrackedXPTimer * 3600)
                TrackerLabel6:Set("XP/Hour: " .. string.format("%0.0f", XPPerHour):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
             end
          else
@@ -1348,14 +1337,14 @@ spawn(function()
          GoldSeconds = TrackedGoldTimer % 60 
 
          if GoldHours > 0 then
-            GoldDuration = GoldHours .. " hour(s), " .. GoldMinutes .. " minute(s), and " .. GoldSeconds .. " second(s)"
+            GoldDurationString = GoldHours .. " hour(s), " .. GoldMinutes .. " minute(s), and " .. GoldSeconds .. " second(s)"
          elseif GoldMinutes > 0 then
-            GoldDuration = GoldMinutes .. " minute(s) and " .. GoldSeconds .. " second(s)"
+            GoldDurationString = GoldMinutes .. " minute(s) and " .. GoldSeconds .. " second(s)"
          else
-            GoldDuration = GoldSeconds .. " second(s)"
+            GoldDurationString = GoldSeconds .. " second(s)"
          end
 
-         TrackerLabel2:Set("Tracked Duration: " .. GoldDuration)
+         TrackerLabel2:Set("Tracked Duration: " .. GoldDurationString)
       end
 
       if TrackXP == true then
@@ -1365,14 +1354,14 @@ spawn(function()
          XPSeconds = TrackedXPTimer % 60 
 
          if XPHours > 0 then
-            XPDuration = XPHours .. " hour(s), " .. XPMinutes .. " minute(s), and " .. XPSeconds .. " second(s)"
+            XPDurationString = XPHours .. " hour(s), " .. XPMinutes .. " minute(s), and " .. XPSeconds .. " second(s)"
          elseif XPMinutes > 0 then
-            XPDuration = XPMinutes .. " minute(s) and " .. XPSeconds .. " second(s)"
+            XPDurationString = XPMinutes .. " minute(s) and " .. XPSeconds .. " second(s)"
          else
-            XPDuration = XPSeconds .. " second(s)"
+            XPDurationString = XPSeconds .. " second(s)"
          end
 
-         TrackerLabel5:Set("Tracked Duration: " .. XPDuration)
+         TrackerLabel5:Set("Tracked Duration: " .. XPDurationString)
       end
    end
 end)
@@ -1400,7 +1389,7 @@ end)
 
 -- refill mana (doesnt work rn)
 function RefillMana()
-   if not level == "Boss" then
+   if level ~= "Boss" then
       game:GetService("ReplicatedStorage").Remote.TouchedRecharge:FireServer(Workspace.Levels.level:WaitForChild("SpawnPoint"))
    end
 end
@@ -1452,7 +1441,6 @@ function ResetGold()
    TrackerLabel2:Set("Tracked Duration: 0 seconds")
    TrackedGoldTimer = 0
    TrackerLabel3:Set("Gold/Hour: 0")
-   goldHistory = {}
    GoldPerHour = 0
 end
 
@@ -1462,7 +1450,6 @@ function ResetXP()
    TrackerLabel5:Set("Tracked Duration: 0 seconds")
    TrackedXPTimer = 0
    TrackerLabel6:Set("XP/Hour: 0")
-   xpHistory = {}
    XPPerHour = 0   
 end
 
