@@ -14,7 +14,6 @@ local RootPart = Player.Character:WaitForChild("HumanoidRootPart")
 local Workspace = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
 local GameGUI =  Player.PlayerGui.GameGui
-local Black = GameGUI:FindFirstChild("Black")
 local PickupGuiContainer = GameGUI.Pickup
 local Level, Arena, PlayerPos
 local SpellState = 1
@@ -37,11 +36,13 @@ local ChestOptions = {
    ["CheapMountChest"] = "Cheap Mount Chest",
    ["MountChest"] = "Mount Chest"
 }
+local AutoReroll = false
+local SelectedRarities = {}
 local SelectedChestName = "Training Area Chest"
 local SelectedChest = "Chest1"
-local AutoRerollToggle = false
 local HomeTPBlack = false
 local LocationTPBlack = false
+local LocationTPTimer = 0
 local SelectedQuest = "LJ:1"
 local AutoQuestToggle = false
 local HPot, MPot
@@ -359,32 +360,77 @@ local QOLButton5 = QOLTab:CreateButton({
    end,
 })
 
-local QOLParagraph3 = QOLTab:CreateParagraph({Title = "Auto Reroll", Content = "Automatically buys another chest (selected) after you delete a pet (using Delete Pet button)"})
+local QOLParagraph3 = QOLTab:CreateParagraph({Title = "Auto Reroll", Content = "Automatically deletes the pet in the selected slot and buys another chest"})
 
-local QOLToggle1 = QOLTab:CreateToggle({
-   Name = "Auto Reroll",
+local QOLButton5 = QOLTab:CreateButton({
+   Name = "Reroll Pet",
+   Callback = function()
+      if SelectedPet and SelectedPet > 0 then
+         if DeletePetLockTimer > 0 then 
+            game:GetService("ReplicatedStorage").Remote.DeletePet:FireServer(SelectedPet)
+            game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("OpenPetChest"):InvokeServer(SelectedChest)
+         else
+            Rayfield:Notify({
+               Title = "Delete Pet Lock",
+               Content = "Delete Pet Lock prevented you from deleting the selected pet. Press the button above to disable it for 1 minute.",
+               Duration = 5,
+               Image = nil
+            })
+         end
+      else
+         Rayfield:Notify({
+            Title = "No Pet Selected!",
+            Content = "You did not select a pet slot above!",
+            Duration = 5,
+            Image = nil,
+            Actions = { -- Notification Buttons
+            },
+         })
+      end
+   end,
+})
+
+local QOLToggle2 = QOLTab:CreateToggle({
+   Name = "Roll Until Rarity",
    CurrentValue = false,
-   Flag = "QOLToggle1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "QOLToggle2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Value)
-      AutoRerollToggle = Value
+      AutoReroll = Value
+   end,
+})
+
+local QOLDropdown3 = QOLTab:CreateDropdown({
+   Name = "Select Chest",
+   Options = {
+      "COMMON",
+      "RARE",
+      "EPIC",
+      "LEGENDARY",
+      "GODLY"
+   },
+   CurrentOption = "COMMON",
+   MultipleOptions = true,
+   Flag = "QOLDropdown3",
+   Callback = function(Option)
+      SelectedRarities = Option
    end,
 })
 
 local QOLSection3 = QOLTab:CreateSection("GUI Blockers")
 
-local QOLToggle2 = QOLTab:CreateToggle({
+local QOLToggle3 = QOLTab:CreateToggle({
    Name = "Remove Home TP Black Screen",
    CurrentValue = false,
-   Flag = "QOLToggle2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "QOLToggle3", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Value)
       HomeTPBlack = Value
    end,
 })
 
-local QOLToggle3 = QOLTab:CreateToggle({
+local QOLToggle4 = QOLTab:CreateToggle({
    Name = "Remove Location TP Black Screen",
    CurrentValue = false,
-   Flag = "QOLToggle3", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "QOLToggle4", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
    Callback = function(Value)
       LocationTPBlack = Value
    end,
@@ -1102,14 +1148,40 @@ end)
 GameGUI.ChildAdded:Connect(function(Object)
    if Object.Name == "Frame" and HomeTPBlack == true then
       Object.Visible = false
+      Rayfield:Notify({
+         Title = "Teleporting...",
+         Content = "",
+         Duration = 1,
+         Image = nil
+      })
    end
 end)
 
 
 -- location TP black
-Black.ChildAdded:Connect(function()
+GameGUI:FindFirstChild("Black").ChildAdded:Connect(function()
    if LocationTPBlack == true then
-      Black.Visible = false
+      GameGUI.Black.Visible = false
+      if LocationTPTimer == 0 then
+         LocationTPTimer = 3
+      end
+   end
+end)
+spawn(function()
+   while wait() do
+      if LocationTPTimer == 3 then
+            Rayfield:Notify({
+            Title = "Teleporting...",
+            Content = "",
+            Duration = 2,
+            Image = nil
+         })
+      end
+      if LocationTPTimer > 0 then
+         LocationTPTimer = LocationTPTimer - 1
+         wait(1)
+      end
+      
    end
 end)
 
@@ -1540,6 +1612,82 @@ spawn(function()
       end
       if XPPerHour and XPPerHour <= 0 then
          TrackerLabel11:Set("Time To Next Level: No Data")
+      end
+   end
+end)
+
+-- autoreoll until rarity
+spawn(function()
+   while wait(0.1) do
+      local PetGUI = GameGUI.Pets
+      if PetGUI and AutoReroll == true then
+         if SelectedPet and SelectedPet > 0 then
+            if DeletePetLockTimer > 0 then 
+               if PetGUI.Visible == true then
+                  local slot = PetGUI.ListFrame.ListBackground.List:FindFirstChild(SelectedPet)
+                  if slot then
+                     local iscorrectrarity = false
+                     for _,rarity in pairs(SelectedRarities) do
+                        if rarity == slot.Rarity.Text then
+                           iscorrectrarity = true
+                           break
+                        end
+                     end
+                     if iscorrectrarity == false then
+                        game:GetService("ReplicatedStorage").Remote.DeletePet:FireServer(SelectedPet)
+                        game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("OpenPetChest"):InvokeServer(SelectedChest)
+                     else
+                        Rayfield:Notify({
+                           Title = "Pet Found!",
+                           Content = "A pet of the selected rarities has been rolled! Manually reroll a new pet if you don't want the pet in the slot.",
+                           Duration = 5,
+                           Image = nil
+                        })
+                        AutoReroll = false
+                        QOLToggle2:Set(false)                     
+                     end
+                  else
+                     Rayfield:Notify({
+                        Title = "Pet Not Found",
+                        Content = "Check that there is a pet in the inputted slot.",
+                        Duration = 5,
+                        Image = nil
+                     })
+                     AutoReroll = false
+                     QOLToggle2:Set(false)   
+                  end
+               else
+                  Rayfield:Notify({
+                     Title = "Pet GUI Not Visible",
+                     Content = "Open the Pet Menu so rarity can be seen.",
+                     Duration = 5,
+                     Image = nil
+                  })
+                  AutoReroll = false
+                  QOLToggle2:Set(false)
+               end
+            else
+               Rayfield:Notify({
+                  Title = "Delete Pet Lock",
+                  Content = "Delete Pet Lock prevented you from deleting the selected pet. Press the button above to disable it for 1 minute.",
+                  Duration = 5,
+                  Image = nil
+               })
+               AutoReroll = false
+               QOLToggle2:Set(false)
+            end
+         else
+            Rayfield:Notify({
+               Title = "No Pet Selected!",
+               Content = "You did not select a pet slot above!",
+               Duration = 5,
+               Image = nil,
+               Actions = { -- Notification Buttons
+               },
+            })
+            AutoReroll = false
+            QOLToggle2:Set(false)
+         end
       end
    end
 end)
