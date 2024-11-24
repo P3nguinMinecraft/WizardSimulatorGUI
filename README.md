@@ -19,6 +19,10 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/P3nguinMinecraft/Wiza
 #### Chest QOL
 ##### Purchase pet chests from anywhere in the world, skipping the animation
 ##### Ability to reroll pets from a chest (by deleting them)
+##### Automatic reroll until a specific rarity is acquired
+
+#### Teleporting QOL
+##### Disables the black screen cover when teleporting between islands or when going to home
 
 #### Quest Manipulation
 ##### Give/cancel any quest in the game
@@ -30,7 +34,7 @@ loadstring(game:HttpGet("https://raw.githubusercontent.com/P3nguinMinecraft/Wiza
 
 #### Autofarm
 ##### Autofarm any enemy in the game from a stationary location
-##### Configurable delay, range
+##### Configurable delay and range
 ##### Option to give the Training 2 quest for AFK farming
 ##### Option to Recharge at 30% Mana (requires Gamepass I think)
 
