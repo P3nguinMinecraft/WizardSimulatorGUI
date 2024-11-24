@@ -1148,12 +1148,25 @@ end)
 GameGUI.ChildAdded:Connect(function(Object)
    if Object.Name == "Frame" and HomeTPBlack == true then
       Object.Visible = false
-      Rayfield:Notify({
-         Title = "Teleporting...",
-         Content = "",
-         Duration = 1,
-         Image = nil
-      })
+      if HomeTPTimer == 0 then
+         HomeTPTimer = 2
+      end
+   end
+end)
+spawn(function()
+   while wait() do
+      if HomeTPTimer == 2 then
+            Rayfield:Notify({
+            Title = "Teleporting...",
+            Content = "",
+            Duration = 1,
+            Image = nil
+         })
+      end
+      if HomeTPTimer > 0 then
+         HomeTPTimer = HomeTPTimer - 1
+         wait(1)
+      end
    end
 end)
 
@@ -1181,7 +1194,6 @@ spawn(function()
          LocationTPTimer = LocationTPTimer - 1
          wait(1)
       end
-      
    end
 end)
 
