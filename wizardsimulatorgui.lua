@@ -41,6 +41,7 @@ local SelectedRarities = {}
 local SelectedChestName = "Training Area Chest"
 local SelectedChest = "Chest1"
 local HomeTPBlack = false
+local HomeTPTimer = 0
 local LocationTPBlack = false
 local LocationTPTimer = 0
 local SelectedQuest = "LJ:1"
@@ -1553,7 +1554,7 @@ end
 
 -- xp stats
 local function ParseTotalXPValue(value)
-   local number, unit = value:match("([%d%.]+)([KMBT]?)")
+   local number, unit = value:match("/([%d%.]+)([KMBT]?)")
    number = tonumber(number)
 
    if unit == "K" then
@@ -1603,7 +1604,10 @@ spawn(function()
          TrackerLabel9:Set("Level: " .. PlayerLevel)
          PlayerXPPercentage = XPBar.Size.X.Scale
          PlayerTotalXP = ParseTotalXPValue(XPText.Text)
+         print("Total XP: " .. PlayerTotalXP)
+         print("XP Percentage: " .. PlayerXPPercentage)
          local MissingXP = round((1 - PlayerXPPercentage) * PlayerTotalXP)
+         print("Missing XP: " .. MissingXP)
          TrackerLabel10:Set("XP To Next Level: " .. string.format("%0.0f", MissingXP):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
          if XPPerHour and XPPerHour > 0 then
             LevelTimer = round(MissingXP / XPPerHour * 3600)
