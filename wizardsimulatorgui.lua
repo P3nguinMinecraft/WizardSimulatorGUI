@@ -422,6 +422,19 @@ local QOLDropdown3 = QOLTab:CreateDropdown({
    end,
 })
 
+local QOLParagraph4 = QOLTab:CreateParagraph({Title = "Scamming", Content = "Removes all pets in your side and accepts, usually too fast for the other side to realize."})
+
+local QOLButton6 = QOLTab:CreateButton({
+   Name = "Scam",
+   Callback = function()
+      game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("TradeUpdate"):FireServer("UpdateOffer",1,0)
+      game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("TradeUpdate"):FireServer("UpdateOffer",2,0)
+      game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("TradeUpdate"):FireServer("UpdateOffer",3,0)
+      game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("TradeUpdate"):FireServer("UpdateOffer",4,0)
+      game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("TradeUpdate"):FireServer("SetReady", true)
+   end,
+})
+
 local QOLSection3 = QOLTab:CreateSection("GUI Blockers")
 
 local QOLToggle3 = QOLTab:CreateToggle({
