@@ -1,6 +1,11 @@
 -- Check out my GitHub! https://github.com/P3nguinMinecraft/WizardSimulatorGUI/
 -- game:GetService("Players").LocalPlayer.Character.PrimaryPart.Position = Vector3.new(898.3, 4, -399) works best with autofarm dummy so you won't be seen (using fly and noclip)
 
+local placeID = 3089478851
+if game.PlaceId ~= placeID then
+   error("Stopped WSG, not in Wizard Simulator")
+end
+
 print("[WSG] Loading Wizard Simulator GUI")
 
 
