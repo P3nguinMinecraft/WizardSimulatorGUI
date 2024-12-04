@@ -15,7 +15,7 @@ getgenv().SecureMode = true
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 -- local vars
-local Player = game:GetService("Players"):WaitForChild("LocalPlayer")
+local Player = game:GetService("Players").LocalPlayer
 local Humanoid = Player.Character:WaitForChild("Humanoid")
 local RootPart = Player.Character:WaitForChild("HumanoidRootPart")
 local Workspace = game:GetService("Workspace")
