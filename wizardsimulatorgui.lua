@@ -1,6 +1,8 @@
 -- Check out my GitHub! https://github.com/P3nguinMinecraft/WizardSimulatorGUI/
 -- game:GetService("Players").LocalPlayer.Character.PrimaryPart.Position = Vector3.new(898.3, 4, -399) works best with autofarm dummy so you won't be seen (using fly and noclip)
 
+repeat task.wait(1) until game:IsLoaded()
+
 local placeID = 3089478851
 if game.PlaceId ~= placeID then
    error("Stopped WSG, not in Wizard Simulator")
@@ -13,7 +15,7 @@ getgenv().SecureMode = true
 local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 -- local vars
-local Player = game:GetService("Players").LocalPlayer
+local Player = game:GetService("Players"):WaitForChild("LocalPlayer")
 local Humanoid = Player.Character:WaitForChild("Humanoid")
 local RootPart = Player.Character:WaitForChild("HumanoidRootPart")
 local Workspace = game:GetService("Workspace")
@@ -1133,7 +1135,7 @@ print("[WSG] Loading Scripts")
 
 -- level and position
 spawn(function()
-   while wait(0.1) do
+   while task.wait(0.1) do
       Level = Player.Level.Value
       if Level == "Boss" then
          Arena = Player.Level:FindFirstChild("Arena").Value
@@ -1156,7 +1158,7 @@ end)
 
 -- pet lock
 spawn(function()
-   while wait(1) do
+   while task.wait(1) do
       if DeletePetLockTimer > 0 then
          DeletePetLockTimer = DeletePetLockTimer - 1
       end
@@ -1173,7 +1175,7 @@ GameGUI.ChildAdded:Connect(function(Object)
    end
 end)
 spawn(function()
-   while wait() do
+   while task.wait() do
       if HomeTPTimer == 2 then
             Rayfield:Notify({
             Title = "Teleporting...",
@@ -1184,7 +1186,7 @@ spawn(function()
       end
       if HomeTPTimer > 0 then
          HomeTPTimer = HomeTPTimer - 1
-         wait(1)
+         task.wait(1)
       end
    end
 end)
@@ -1200,7 +1202,7 @@ GameGUI:FindFirstChild("Black").ChildAdded:Connect(function()
    end
 end)
 spawn(function()
-   while wait() do
+   while task.wait() do
       if LocationTPTimer == 3 then
             Rayfield:Notify({
             Title = "Teleporting...",
@@ -1211,7 +1213,7 @@ spawn(function()
       end
       if LocationTPTimer > 0 then
          LocationTPTimer = LocationTPTimer - 1
-         wait(1)
+         task.wait(1)
       end
    end
 end)
@@ -1224,7 +1226,7 @@ end)
 
 -- mana detector
 spawn(function()
-   while wait(0.1) do
+   while task.wait(0.1) do
       Mana = Player.Mana.value
       MaxMana = Player.MaxMana.value
       if PreviousMana ~= Mana then
@@ -1237,7 +1239,7 @@ end)
 
 -- auto potion loop
 spawn(function()
-   while wait(0.1) do
+   while task.wait(0.1) do
       local success1 = pcall(function()
          HPot = Workspace.Effects:FindFirstChild("HealthPotion")
       end)
@@ -1274,7 +1276,7 @@ local function ConnectEnemyRemoved(Folder)
 end
 
 spawn(function()
-   while wait(AutoFarmDelay/2) do
+   while task.wait(AutoFarmDelay/2) do
       if PlayerPos and AutoFarmToggle then
          
          local TargetEnemy = nil
@@ -1365,7 +1367,7 @@ end)
 
 -- auto recharge
 spawn(function()
-   while wait(0.1) do
+   while task.wait(0.1) do
       if AutoRechargeToggle == true and ManaPercentage < 30 then 
          game:GetService("ReplicatedStorage").Remote.Recharge:FireServer() 
          --RefillMana();
@@ -1390,7 +1392,7 @@ end
 PickupGuiContainer.ChildAdded:Connect(function(GuiFrame) 
    for _, TextLabel in ipairs(GuiFrame:GetChildren()) do
       if TextLabel.Name == "Amount" and TrackedElements[GuiFrame] ~= true then
-         wait(0.1) -- wait for correct text
+         task.wait(0.1) -- wait for correct text
          local Amount, Type = ParseTrackerText(TextLabel.Text)
          
          -- Update Gold or XP depending on the type
@@ -1440,7 +1442,7 @@ end)
 
 -- Tracker timer
 spawn(function()
-   while wait(1) do
+   while task.wait(1) do
       if TrackGold == true then
          TrackedGoldTimer = TrackedGoldTimer + 1
          GoldHours = math.floor(TrackedGoldTimer / 3600)
@@ -1486,7 +1488,7 @@ end)
 
 -- walkspeed and jumppower management
 spawn(function()
-   while wait(0.01) do
+   while task.wait(0.01) do
       if WalkspeedToggleOld == true and WalkspeedToggle == false then
          Humanoid.WalkSpeed = 16
       end
@@ -1518,14 +1520,14 @@ game:GetService("ReplicatedStorage").Remote.CastSpell.OnClientEvent:Connect(func
    end
 end)
 spawn(function()
-   while wait(0.1) do
+   while task.wait(0.1) do
       if NoSlowTimer > 0 then
          ApplyNoSlow = true
          NoSlowTimer = NoSlowTimer - 1
          if NoSlowTimer <= 0 then
             ApplyNoSlow = false
          end
-         wait(1)
+         task.wait(1)
       end
    end
 end)
@@ -1533,7 +1535,7 @@ end)
 
 -- no slow management
 spawn(function()
-   while wait(0.01) do
+   while task.wait(0.01) do
       if (ApplyNoSlow == true) then
          Humanoid.WalkSpeed = 16
       end
@@ -1614,7 +1616,7 @@ end
 
 
 spawn(function()
-   while wait(1) do
+   while task.wait(1) do
       local XPBar = GameGUI.Stats.ExperienceOutside.Bar
       local XPText = GameGUI.Stats.ExperienceOutside.Amount
       if XPBar and XPText then
@@ -1622,10 +1624,8 @@ spawn(function()
          TrackerLabel9:Set("Level: " .. PlayerLevel)
          PlayerXPPercentage = XPBar.Size.X.Scale
          PlayerTotalXP = ParseTotalXPValue(XPText.Text)
-         print("Total XP: " .. PlayerTotalXP)
-         print("XP Percentage: " .. PlayerXPPercentage)
+         if not PlayerTotalXP then return end
          local MissingXP = round((1 - PlayerXPPercentage) * PlayerTotalXP)
-         print("Missing XP: " .. MissingXP)
          TrackerLabel10:Set("XP To Next Level: " .. string.format("%0.0f", MissingXP):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
          if XPPerHour and XPPerHour > 0 then
             LevelTimer = round(MissingXP / XPPerHour * 3600)
@@ -1652,7 +1652,7 @@ end)
 
 -- autoreoll until rarity
 spawn(function()
-   while wait(0.1) do
+   while task.wait(0.1) do
       local PetGUI = GameGUI.Pets
       if PetGUI and AutoReroll == true then
          if SelectedPet and SelectedPet > 0 then
