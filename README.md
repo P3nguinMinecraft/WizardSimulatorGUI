@@ -1,5 +1,5 @@
 # WizardSimulatorGUI
-[Discord Server](https://discord.gg/EhkF4A56cu)
+[Discord Server](https://discord.gg/GhkXV3K5pq)
 ## Roblox Wizard Simulator GUI (this is a cheat/exploit)
 
 # I am not responsible for any actions caused by the use of this script.
