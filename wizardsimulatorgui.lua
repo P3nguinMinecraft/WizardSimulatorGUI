@@ -191,7 +191,7 @@ local CreditLabel1 = CreditTab:CreateLabel("Developed by penguin586970")
 
 local CreditLabel2 = CreditTab:CreateLabel("Executor used for development: MacSploit, Delta (not affiliated!)")
 
-local CreditLabel3 = CreditTab:CreateLabel("For questions, concerns, contact windows1267 on discord")
+local CreditLabel3 = CreditTab:CreateLabel("For questions, concerns, contact windows1267 on discord or join the discord server on the GitHub")
 
 print("[WSG] Loading QOL Tab")
 
