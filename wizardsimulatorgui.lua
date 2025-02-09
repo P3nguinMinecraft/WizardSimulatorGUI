@@ -167,9 +167,9 @@ local Window = Rayfield:CreateWindow({
       FileName = "wizardsimulatorgui_config"
    },
    Discord = { 
-      Enabled = false,
-      Invite = "noinvitelink", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ABCD would be ABCD
-      RememberJoins = false -- Set this to false to make them join the discord every time they load it up
+      Enabled = true,
+      Invite = "fWncS2vFxn", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ABCD would be ABCD
+      RememberJoins = true -- Set this to false to make them join the discord every time they load it up
    },
    KeySystem = false, -- Set this to true to use our key system
    KeySettings = {
