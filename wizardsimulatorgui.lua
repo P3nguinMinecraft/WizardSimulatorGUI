@@ -5,7 +5,7 @@ if not game:IsLoaded() then game.Loaded:Wait() end
 
 local placeID = 3089478851
 if game.PlaceId ~= placeID then
-   error("Stopped WSG, not in Wizard Simulator")
+   warn("Stopped WSG, not in Wizard Simulator")
 end
 
 print("[WSG] Loading Wizard Simulator GUI")
