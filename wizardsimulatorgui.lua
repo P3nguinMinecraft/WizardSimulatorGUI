@@ -17,13 +17,13 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 -- local vars
 local Player = game:GetService("Players").LocalPlayer
-local Humanoid = Player.Character:WaitForChild("Humanoid")
-local RootPart = Player.Character:WaitForChild("HumanoidRootPart")
-local Workspace = game:GetService("Workspace")
-local UserInputService = game:GetService("UserInputService")
-local GameGUI =  Player.PlayerGui.GameGui
-local PickupGuiContainer = GameGUI.Pickup
-local GameState = {
+local vars = {
+   Humanoid = Player.Character:WaitForChild("Humanoid"),
+   RootPart = Player.Character:WaitForChild("HumanoidRootPart"),
+   Workspace = game:GetService("Workspace"),
+   UserInputService = game:GetService("UserInputService"),
+   GameGUI = Player.PlayerGui.GameGui,
+   PickupGuiContainer = Player.PlayerGui.GameGui.Pickup,
    Level = nil,
    Arena = nil,
    PlayerPos = nil,
@@ -44,7 +44,7 @@ local GameState = {
    AutoQuestToggle = false,
    HPot = nil,
    MPot = nil,
-   HealthPercentage = Humanoid.Health / Humanoid.MaxHealth * 100,
+   HealthPercentage = nil,
    PreviousMana = nil,
    Mana = nil,
    MaxMana = nil,
@@ -98,6 +98,12 @@ local GameState = {
    LevelHours = nil,
    LevelDuration = nil
 }
+
+local Humanoid = vars.Humanoid
+local RootPart = vars.RootPart
+local GameGUI = vars.GameGUI
+local PickupGuiContainer = vars.PickupGuiContainer
+vars.HealthPercentage = vars.Humanoid.Health / vars.Humanoid.MaxHealth * 100
 
 local PetSlotOptions = {
    [1] = "Main",
@@ -212,6 +218,10 @@ local Window = Rayfield:CreateWindow({
    }
 })
 
+local function round(num)
+   return math.floor(num + 0.5)
+end
+
 print("[WSG] Loading Info Tab")
 
 local CreditTab = Window:CreateTab("Info", nil)
@@ -235,9 +245,9 @@ local QOLInput1 = QOLTab:CreateInput({
    Callback = function(Text)
       local num = tonumber(Text)
       if num ~= nil and num > 0 and math.floor(num) == num then
-         SelectedPet = tonumber(Text)
+         vars.SelectedPet = tonumber(Text)
       elseif Text == "" then
-         SelectedPet = nil
+         vars.SelectedPet = nil
       else
          Rayfield:Notify({
             Title = "Error",
@@ -267,10 +277,10 @@ local QOLDropdown1 = QOLTab:CreateDropdown({
    MultipleOptions = false,
    Flag = "QOLDropdown1",
    Callback = function(Option)
-      SelectedPetSlotName = Option[1]
+      vars.SelectedPetSlotName = Option[1]
       for i, v in pairs(PetSlotOptions) do
-         if v == SelectedPetSlotName then
-            SelectedPetSlot = i
+         if v == vars.SelectedPetSlotName then
+            vars.SelectedPetSlot = i
             break
          end
       end
@@ -280,8 +290,8 @@ local QOLDropdown1 = QOLTab:CreateDropdown({
 local QOLButton1 = QOLTab:CreateButton({
    Name = "Equip Pet",
    Callback = function()
-      if SelectedPet and SelectedPetSlot then 
-         game:GetService("ReplicatedStorage").Remote.EquipPet:FireServer(SelectedPet,SelectedPetSlot)
+      if vars.SelectedPet and vars.SelectedPetSlot then 
+         game:GetService("ReplicatedStorage").Remote.EquipPet:FireServer(vars.SelectedPet,vars.SelectedPetSlot)
       else
          Rayfield:Notify({
             Title = "Error",
@@ -303,7 +313,7 @@ local QOLButton1 = QOLTab:CreateButton({
 local QOLButton2 = QOLTab:CreateButton({
    Name = "Unequip Pet",
    Callback = function()
-      game:GetService("ReplicatedStorage").Remote.EquipPet:FireServer(0,SelectedPetSlot)
+      game:GetService("ReplicatedStorage").Remote.EquipPet:FireServer(0,vars.SelectedPetSlot)
    end,
 })
 
@@ -312,11 +322,11 @@ local QOLParagraph2 = QOLTab:CreateParagraph({Title = "Delete Pet", Content = "S
 local QOLButton3 = QOLTab:CreateButton({
    Name = "Delete Pet",
    Callback = function()
-      if SelectedPet and SelectedPet > 0 then
-         if DeletePetLockTimer > 0 then 
-            game:GetService("ReplicatedStorage").Remote.DeletePet:FireServer(SelectedPet)
-            if AutoReroll == true then
-               game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("OpenPetChest"):InvokeServer(SelectedChest)
+      if vars.SelectedPet and vars.SelectedPet > 0 then
+         if vars.DeletePetLockTimer > 0 then 
+            game:GetService("ReplicatedStorage").Remote.DeletePet:FireServer(vars.SelectedPet)
+            if vars.AutoReroll == true then
+               game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("OpenPetChest"):InvokeServer(vars.SelectedChest)
             end
          else
             Rayfield:Notify({
@@ -328,7 +338,7 @@ local QOLButton3 = QOLTab:CreateButton({
                   Ignore = {
                      Name = "Disable Lock",
                      Callback = function()
-                        DeletePetLockTimer = 60
+                        vars.DeletePetLockTimer = 60
                      end
                   },
                },
@@ -350,7 +360,7 @@ local QOLButton3 = QOLTab:CreateButton({
 local QOLButton4 = QOLTab:CreateButton({
    Name = "Disable Delete Pet Lock",
    Callback = function()
-      DeletePetLockTimer = 60
+      vars.DeletePetLockTimer = 60
       Rayfield:Notify({
          Title = "Pet Lock Enabled",
          Content = "You may now delete pets for 60 seconds!",
@@ -380,10 +390,10 @@ local QOLDropdown2 = QOLTab:CreateDropdown({
    MultipleOptions = false,
    Flag = "QOLDropdown2",
    Callback = function(Option)
-      SelectedChestName = Option[1]
+      vars.SelectedChestName = Option[1]
       for i, v in pairs(ChestOptions) do
-         if v == SelectedChestName then
-            SelectedChest = i
+         if v == vars.SelectedChestName then
+            vars.SelectedChest = i
             break
          end
       end
@@ -393,7 +403,7 @@ local QOLDropdown2 = QOLTab:CreateDropdown({
 local QOLButton5 = QOLTab:CreateButton({
    Name = "Buy Chest",
    Callback = function()
-      game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("OpenPetChest"):InvokeServer(SelectedChest)
+      game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("OpenPetChest"):InvokeServer(vars.SelectedChest)
    end,
 })
 
@@ -402,10 +412,10 @@ local QOLParagraph3 = QOLTab:CreateParagraph({Title = "Auto Reroll", Content = "
 local QOLButton5 = QOLTab:CreateButton({
    Name = "Reroll Pet",
    Callback = function()
-      if SelectedPet and SelectedPet > 0 then
-         if DeletePetLockTimer > 0 then 
-            game:GetService("ReplicatedStorage").Remote.DeletePet:FireServer(SelectedPet)
-            game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("OpenPetChest"):InvokeServer(SelectedChest)
+      if vars.SelectedPet and vars.SelectedPet > 0 then
+         if vars.DeletePetLockTimer > 0 then 
+            game:GetService("ReplicatedStorage").Remote.DeletePet:FireServer(vars.SelectedPet)
+            game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("OpenPetChest"):InvokeServer(vars.SelectedChest)
          else
             Rayfield:Notify({
                Title = "Delete Pet Lock",
@@ -432,7 +442,7 @@ local QOLToggle2 = QOLTab:CreateToggle({
    CurrentValue = false,
    Flag = "QOLToggle2",
    Callback = function(Value)
-      AutoReroll = Value
+      vars.AutoReroll = Value
    end,
 })
 
@@ -449,7 +459,7 @@ local QOLDropdown3 = QOLTab:CreateDropdown({
    MultipleOptions = true,
    Flag = "QOLDropdown3",
    Callback = function(Option)
-      SelectedRarities = Option
+      vars.SelectedRarities = Option
    end,
 })
 
@@ -473,7 +483,7 @@ local QOLToggle3 = QOLTab:CreateToggle({
    CurrentValue = false,
    Flag = "QOLToggle3",
    Callback = function(Value)
-      HomeTPBlack = Value
+      vars.HomeTPBlack = Value
    end,
 })
 
@@ -482,7 +492,7 @@ local QOLToggle4 = QOLTab:CreateToggle({
    CurrentValue = false,
    Flag = "QOLToggle4",
    Callback = function(Value)
-      LocationTPBlack = Value
+      vars.LocationTPBlack = Value
    end,
 })
 
@@ -491,7 +501,7 @@ local QOLToggle5 = QOLTab:CreateToggle({
    CurrentValue = false,
    Flag = "QOLToggle5",
    Callback = function(Value)
-      NoSlow = Value
+      vars.NoSlow = Value
    end,
 })
 
@@ -518,15 +528,15 @@ local QuestDropdown1 = QuestTab:CreateDropdown({
    MultipleOptions = false,
    Flag = "QuestDropdown1",
    Callback = function(Option)
-      SelectedQuest = Option[1]
+      vars.SelectedQuest = Option[1]
    end,
 })
 
 local QuestButton1 = QuestTab:CreateButton({
    Name = "Give Quest",
    Callback = function()
-      if SelectedQuest then
-         game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer(SelectedQuest)
+      if vars.SelectedQuest then
+         game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer(vars.SelectedQuest)
       else
          Rayfield:Notify({
             Title = "Error",
@@ -538,7 +548,7 @@ local QuestButton1 = QuestTab:CreateButton({
                   Name = "Debug",
                   Callback = function()
                   print('Selected Quest: ')
-                  print(SelectedQuest)
+                  print(vars.SelectedQuest)
                end},
             },
          })
@@ -552,8 +562,8 @@ local QuestKeybind1 = QuestTab:CreateKeybind({
    HoldToInteract = false,
    Flag = "QuestKeybind1",
    Callback = function(Keybind)
-      if SelectedQuest then
-            game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer(SelectedQuest)
+      if vars.SelectedQuest then
+            game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer(vars.SelectedQuest)
       else
          Rayfield:Notify({
             Title = "Error",
@@ -565,7 +575,7 @@ local QuestKeybind1 = QuestTab:CreateKeybind({
                   Name = "Debug",
                   Callback = function()
                   print('Selected Quest: ')
-                  print(SelectedQuest)
+                  print(vars.SelectedQuest)
                end},
             },
          })
@@ -595,7 +605,7 @@ local QuestToggle1 = QuestTab:CreateToggle({
    CurrentValue = false,
    Flag = "QuestToggle1",
    Callback = function(Value)
-      AutoQuestToggle = Value
+      vars.AutoQuestToggle = Value
    end,
 })
 
@@ -614,7 +624,7 @@ local PotionSection1 = PotionTab:CreateSection("Health")
 local PotionButton1 = PotionTab:CreateButton({
    Name = "Get Health Potion",
    Callback = function()
-      if HPot then firetouchinterest(Humanoid.LeftLeg, HPot.Forcefield, 0) end
+      if vars.HPot then firetouchinterest(vars.Humanoid.LeftLeg, vars.HPot.Forcefield, 0) end
    end,
 })
 
@@ -624,7 +634,7 @@ local PotionKeybind1 = PotionTab:CreateKeybind({
    HoldToInteract = false,
    Flag = "PotionKeybind1",
    Callback = function(Keybind)
-      if HPot then firetouchinterest(Humanoid.LeftLeg, HPot.Forcefield, 0) end
+      if vars.HPot then firetouchinterest(vars.Humanoid.LeftLeg, vars.HPot.Forcefield, 0) end
    end,
 })
 
@@ -633,7 +643,7 @@ local PotionToggle1 = PotionTab:CreateToggle({
    CurrentValue = false,
    Flag = "PotionToggle1",
    Callback = function(Value)
-      AutoHealthToggle = Value
+      vars.AutoHealthToggle = Value
    end,
 })
 
@@ -645,7 +655,7 @@ local PotionSlider1 = PotionTab:CreateSlider({
    CurrentValue = 50,
    Flag = "PotionSlider1",
    Callback = function(Value)
-      AutoHealthThreshold = Value
+      vars.AutoHealthThreshold = Value
    end,
 })
 
@@ -655,7 +665,7 @@ local PotionSection2 = PotionTab:CreateSection("Mana")
 local PotionButton2 = PotionTab:CreateButton({
    Name = "Get Mana Potion",
    Callback = function()
-      if MPot then firetouchinterest(Humanoid.LeftLeg, MPot.Forcefield, 0) end
+      if vars.MPot then firetouchinterest(vars.Humanoid.LeftLeg, vars.MPot.Forcefield, 0) end
    end,
 })
 
@@ -665,7 +675,7 @@ local PotionKeybind2 = PotionTab:CreateKeybind({
    HoldToInteract = false,
    Flag = "PotionKeybind2",
    Callback = function(Keybind)
-      if MPot then firetouchinterest(Humanoid.LeftLeg, MPot.Forcefield, 0) end
+      if vars.MPot then firetouchinterest(vars.Humanoid.LeftLeg, vars.MPot.Forcefield, 0) end
    end,
 })
 
@@ -674,7 +684,7 @@ local PotionToggle2 = PotionTab:CreateToggle({
    CurrentValue = false,
    Flag = "PotionToggle2",
    Callback = function(Value)
-      AutoManaToggle = Value
+      vars.AutoManaToggle = Value
    end,
 })
 
@@ -686,7 +696,7 @@ local PotionSlider2 = PotionTab:CreateSlider({
    CurrentValue = 70,
    Flag = "PotionSlider2",
    Callback = function(Value)
-      AutoManaThreshold = Value
+      vars.AutoManaThreshold = Value
    end,
 })
 
@@ -701,7 +711,7 @@ local AutoFarmToggle1 = AutoFarmTab:CreateToggle({
    CurrentValue = false,
    Flag = "AutoFarmToggle1",
    Callback = function(Value)
-      AutoFarmToggle = Value
+      vars.AutoFarmToggle = Value
    end,
 })
 
@@ -711,8 +721,8 @@ local AutoFarmKeybind1 = AutoFarmTab:CreateKeybind({
    HoldToInteract = false,
    Flag = "AutoFarmKeybind1",
    Callback = function(Keybind)
-      AutoFarmToggle = not AutoFarmToggle
-      AutoFarmToggle1:Set(AutoFarmToggle)
+      vars.AutoFarmToggle = not vars.AutoFarmToggle
+      AutoFarmToggle1:Set(vars.AutoFarmToggle)
       Rayfield:Notify({
          Title = "Auto Farm Keybind",
          Content = "Toggled!",
@@ -794,15 +804,15 @@ local AutoFarmDropdown1 = AutoFarmTab:CreateDropdown({
    MultipleOptions = true,
    Flag = "AutoFarmDropdown1",
    Callback = function(Options)
-      AutoFarmEnemyNames = {}
-      AutoFarmEnemies = {}
+      vars.AutoFarmEnemyNames = {}
+      vars.AutoFarmEnemies = {}
       for _, Option in ipairs(Options) do
-         table.insert(AutoFarmEnemyNames, Option)
+         table.insert(vars.AutoFarmEnemyNames, Option)
       end
-      for _, SelectedEnemyName in ipairs(AutoFarmEnemyNames) do
+      for _, SelectedEnemyName in ipairs(vars.AutoFarmEnemyNames) do
          for Identifier, SelectionName in pairs(AutoFarmEnemyOptions) do
             if SelectionName ==  SelectedEnemyName then
-               table.insert(AutoFarmEnemies, Identifier)
+               table.insert(vars.AutoFarmEnemies, Identifier)
                break
             end
          end
@@ -817,14 +827,14 @@ local AutoFarmDropdown2 = AutoFarmTab:CreateDropdown({
    MultipleOptions = false,
    Flag = "AutoFarmDropdown2",
    Callback = function(Option)
-      AutoFarmTarget = Option[1]
+      vars.AutoFarmTarget = Option[1]
    end,
 })
 
 local AutoFarmButton1 = AutoFarmTab:CreateButton({
    Name = "Clear Hit Enemies",
    Callback = function()
-      HitEnemies = {}
+      vars.HitEnemies = {}
       Rayfield:Notify({
          Title = "Clear Hit Enemies",
          Content = "All tracked enemies cleared. This is really useful because this script tries to attack enemies through walls, and does not register if they are actually hit.",
@@ -846,7 +856,7 @@ local AutoFarmSlider1 = AutoFarmTab:CreateSlider({
    CurrentValue = 1.5,
    Flag = "AutoFarmSlider1",
    Callback = function(Value)
-      AutoFarmDelay = Value
+      vars.AutoFarmDelay = Value
    end,
 })
 
@@ -860,7 +870,7 @@ local AutoFarmSlider2 = AutoFarmTab:CreateSlider({
    CurrentValue = 85,
    Flag = "AutoFarmSlider2",
    Callback = function(Value)
-      SpellRange = Value
+      vars.SpellRange = Value
    end,
 })
 
@@ -871,7 +881,7 @@ local AutoFarmToggle2 = AutoFarmTab:CreateToggle({
    CurrentValue = false,
    Flag = "AutoFarmToggle2",
    Callback = function(Value)
-      AutoFarmQuestToggle = Value
+      vars.AutoFarmQuestToggle = Value
    end,
 })
 
@@ -880,7 +890,7 @@ local AutoFarmToggle3 = AutoFarmTab:CreateToggle({
    CurrentValue = false,
    Flag = "AutoFarmToggle3",
    Callback = function(Value)
-      AutoRechargeToggle = Value
+      vars.AutoRechargeToggle = Value
    end,
 })
 
@@ -935,7 +945,7 @@ local TrackerToggle1 = TrackerTab:CreateToggle({
    CurrentValue = false,
    Flag = "TrackerToggle1",
    Callback = function(Value)
-      TrackGold = Value
+      vars.TrackGold = Value
    end,
 })
 
@@ -967,7 +977,7 @@ local TrackerToggle2 = TrackerTab:CreateToggle({
    CurrentValue = false,
    Flag = "TrackerToggle2",
    Callback = function(Value)
-      TrackXP = Value
+      vars.TrackXP = Value
    end,
 })
 
@@ -1011,7 +1021,7 @@ local ToolToggle1 = ToolTab:CreateToggle({
    CurrentValue = false,
    Flag = "ToolToggle1",
    Callback = function(Value)
-      WalkspeedToggle = Value
+      vars.WalkspeedToggle = Value
    end,
 })
 
@@ -1023,7 +1033,7 @@ local ToolSlider1 = ToolTab:CreateSlider({
    CurrentValue = 16,
    Flag = "ToolSlider1",
    Callback = function(Value)
-      Walkspeed = Value
+      vars.Walkspeed = Value
    end,
 })
 
@@ -1032,7 +1042,7 @@ local ToolToggle2 = ToolTab:CreateToggle({
    CurrentValue = false,
    Flag = "ToolToggle2",
    Callback = function(Value)
-      JumpPowerToggle = Value
+      vars.JumpPowerToggle = Value
    end,
 })
 
@@ -1044,7 +1054,7 @@ local ToolSlider2 = ToolTab:CreateSlider({
    CurrentValue = 50,
    Flag = "ToolSlider2",
    Callback = function(Value)
-      JumpPower = Value
+      vars.JumpPower = Value
    end,
 })
 
@@ -1133,7 +1143,7 @@ local DebugButton2 = DebugTab:CreateButton({
    Name = "Dump HitEnemies",
    Callback = function()
       print("Dumping HitEnemies Table")
-      for i, v in pairs(HitEnemies) do
+      for i, v in pairs(vars.HitEnemies) do
          print(i)
          print(v)
       end
@@ -1167,19 +1177,19 @@ print("[WSG] Loading Scripts")
 -- level and position
 task.spawn(function()
    while task.wait(0.1) do
-      Level = Player.Level.Value
-      if Level == "Boss" then
-         Arena = Player.Level:FindFirstChild("Arena").Value
+      vars.Level = Player.Level.Value
+      if vars.Level == "Boss" then
+         vars.Arena = Player.Level:FindFirstChild("Arena").Value
       end
       if Player and Player.Character then
-         PlayerPos = Player.Character.PrimaryPart and Player.Character.PrimaryPart.Position
+         vars.PlayerPos = Player.Character.PrimaryPart and Player.Character.PrimaryPart.Position
       end
    end
 end)
 
 -- input detector
-UserInputService.InputBegan:Connect(function(input)
-   if AutoQuestToggle then
+vars.UserInputService.InputBegan:Connect(function(input)
+   if vars.AutoQuestToggle then
       if input.KeyCode == Enum.KeyCode.E or input.KeyCode == Enum.KeyCode.Q then
          game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer("CJ:4")
       end
@@ -1190,24 +1200,24 @@ end)
 -- pet lock
 task.spawn(function()
    while task.wait(1) do
-      if DeletePetLockTimer > 0 then
-         DeletePetLockTimer = DeletePetLockTimer - 1
+      if vars.DeletePetLockTimer > 0 then
+         vars.DeletePetLockTimer = vars.DeletePetLockTimer - 1
       end
    end
 end)
 
 -- home TP black
-GameGUI.ChildAdded:Connect(function(Object)
-   if Object.Name == "Frame" and HomeTPBlack == true then
+vars.GameGUI.ChildAdded:Connect(function(Object)
+   if Object.Name == "Frame" and vars.HomeTPBlack == true then
       Object.Visible = false
-      if HomeTPTimer == 0 then
-         HomeTPTimer = 2
+      if vars.HomeTPTimer == 0 then
+         vars.HomeTPTimer = 2
       end
    end
 end)
 task.spawn(function()
    while task.wait() do
-      if HomeTPTimer == 2 then
+      if vars.HomeTPTimer == 2 then
             Rayfield:Notify({
             Title = "Teleporting...",
             Content = "",
@@ -1215,8 +1225,8 @@ task.spawn(function()
             Image = nil
          })
       end
-      if HomeTPTimer > 0 then
-         HomeTPTimer = HomeTPTimer - 1
+      if vars.HomeTPTimer > 0 then
+         vars.HomeTPTimer = vars.HomeTPTimer - 1
          task.wait(1)
       end
    end
@@ -1224,17 +1234,17 @@ end)
 
 
 -- location TP black
-GameGUI:FindFirstChild("Black").ChildAdded:Connect(function()
-   if LocationTPBlack == true then
-      GameGUI.Black.Visible = false
-      if LocationTPTimer == 0 then
-         LocationTPTimer = 3
+vars.GameGUI:FindFirstChild("Black").ChildAdded:Connect(function()
+   if vars.LocationTPBlack == true then
+      vars.GameGUI.Black.Visible = false
+      if vars.LocationTPTimer == 0 then
+         vars.LocationTPTimer = 3
       end
    end
 end)
 task.spawn(function()
    while task.wait() do
-      if LocationTPTimer == 3 then
+      if vars.LocationTPTimer == 3 then
             Rayfield:Notify({
             Title = "Teleporting...",
             Content = "",
@@ -1242,28 +1252,28 @@ task.spawn(function()
             Image = nil
          })
       end
-      if LocationTPTimer > 0 then
-         LocationTPTimer = LocationTPTimer - 1
+      if vars.LocationTPTimer > 0 then
+         vars.LocationTPTimer = vars.LocationTPTimer - 1
          task.wait(1)
       end
    end
 end)
 
 -- health detector
-Humanoid.HealthChanged:Connect(function()
-    HealthPercentage = Humanoid.Health / Humanoid.MaxHealth * 100
+vars.Humanoid.HealthChanged:Connect(function()
+    vars.HealthPercentage = vars.Humanoid.Health / vars.Humanoid.MaxHealth * 100
 end)
 
 
 -- mana detector
 task.spawn(function()
    while task.wait(0.1) do
-      Mana = Player.Mana.value
-      MaxMana = Player.MaxMana.value
-      if PreviousMana ~= Mana then
-         ManaPercentage = Mana / MaxMana * 100
+      vars.Mana = Player.Mana.value
+      vars.MaxMana = Player.MaxMana.value
+      if vars.PreviousMana ~= vars.Mana then
+         vars.ManaPercentage = vars.Mana / vars.MaxMana * 100
       end
-      PreviousMana = Mana
+      vars.PreviousMana = vars.Mana
    end
 end)
 
@@ -1272,26 +1282,26 @@ end)
 task.spawn(function()
    while task.wait(0.1) do
       local success1 = pcall(function()
-         HPot = Workspace.Effects:FindFirstChild("HealthPotion")
+         vars.HPot = vars.Workspace.Effects:FindFirstChild("HealthPotion")
       end)
       local success2 = pcall(function()
-         MPot = Workspace.Effects:FindFirstChild("ManaPotion")
+         vars.MPot = vars.Workspace.Effects:FindFirstChild("ManaPotion")
       end)
-      if HPot then
+      if vars.HPot then
          PotionButton1:Set("Get Health Potion - Avaliable")
       else
          PotionButton1:Set("Get Health Potion - Unavaliable")
       end
-      if MPot then
+      if vars.MPot then
          PotionButton2:Set("Get Mana Potion - Avaliable")
       else
          PotionButton2:Set("Get Mana Potion - Unavaliable")
       end
-      if AutoHealthToggle == true and HealthPercentage < AutoHealthThreshold then
-         if HPot then firetouchinterest(Humanoid.LeftLeg, HPot.Forcefield, 0) end
+      if vars.AutoHealthToggle == true and vars.HealthPercentage < vars.AutoHealthThreshold then
+         if vars.HPot then firetouchinterest(vars.Humanoid.LeftLeg, vars.HPot.Forcefield, 0) end
       end
-      if AutoManaToggle == true and ManaPercentage < AutoManaThreshold then
-         if MPot then firetouchinterest(Humanoid.LeftLeg, MPot.Forcefield, 0) end
+      if vars.AutoManaToggle == true and vars.ManaPercentage < vars.AutoManaThreshold then
+         if vars.MPot then firetouchinterest(vars.Humanoid.LeftLeg, vars.MPot.Forcefield, 0) end
       end
    end
 end)
@@ -1299,21 +1309,21 @@ end)
 
 -- autofarm
 local function ConnectEnemyRemoved(Folder)
-   if Folder and not ConnectedEnemyFolders[Folder] then
-      ConnectedEnemyFolders[Folder] = Folder.ChildRemoved:Connect(function(DeletedEnemy)
-         HitEnemies[DeletedEnemy] = nil
+   if Folder and not vars.ConnectedEnemyFolders[Folder] then
+      vars.ConnectedEnemyFolders[Folder] = Folder.ChildRemoved:Connect(function(DeletedEnemy)
+         vars.HitEnemies[DeletedEnemy] = nil
       end)
    end
 end
 
 task.spawn(function()
-   while task.wait(AutoFarmDelay/2) do
-      if PlayerPos and AutoFarmToggle then
+   while task.wait(vars.AutoFarmDelay/2) do
+      if vars.PlayerPos and vars.AutoFarmToggle then
          local TargetEnemy = nil
-         local TargetDistance = AutoFarmTarget == "Farthest" and 0 or math.huge -- if targetting farthest default is 0, otherwise its math.huge
-         for _, EnemyName in ipairs(AutoFarmEnemies) do
+         local TargetDistance = vars.AutoFarmTarget == "Farthest" and 0 or math.huge -- if targetting farthest default is 0, otherwise its math.huge
+         for _, EnemyName in ipairs(vars.AutoFarmEnemies) do
             -- search levels
-            for _, LevelFolder in ipairs(Workspace.Levels:GetChildren()) do
+            for _, LevelFolder in ipairs(vars.Workspace.Levels:GetChildren()) do
                local LevelEnemiesFolder = LevelFolder:FindFirstChild("Enemies")
                if LevelEnemiesFolder then
                   ConnectEnemyRemoved(LevelEnemiesFolder)
@@ -1321,20 +1331,20 @@ task.spawn(function()
                      if Enemy.Name == EnemyName then
                         local EnemyPos = Enemy.PrimaryPart and Enemy.PrimaryPart.Position
                         if EnemyPos then
-                           local Distance = (PlayerPos - EnemyPos).magnitude
+                           local Distance = (vars.PlayerPos - EnemyPos).magnitude
 
-                           if AutoFarmTarget == "Closest" then
+                           if vars.AutoFarmTarget == "Closest" then
                               if Distance < TargetDistance then
                                  TargetEnemy = Enemy
                                  TargetDistance = Distance
                               end
-                           elseif AutoFarmTarget == "Farthest" then
+                           elseif vars.AutoFarmTarget == "Farthest" then
                               if Distance > TargetDistance then
                                  TargetEnemy = Enemy
                                  TargetDistance = Distance
                               end
-                           elseif AutoFarmTarget == "Never Hit" then
-                              if HitEnemies[Enemy] == nil and Distance < TargetDistance and Distance < SpellRange then
+                           elseif vars.AutoFarmTarget == "Never Hit" then
+                              if vars.HitEnemies[Enemy] == nil and Distance < TargetDistance and Distance < vars.SpellRange then
                                  TargetEnemy = Enemy
                                  TargetDistance = Distance
                               end
@@ -1346,7 +1356,7 @@ task.spawn(function()
             end
 
             -- search boss arenas
-            for _, BossArenaFolder in ipairs(Workspace.BossArenas:GetChildren()) do
+            for _, BossArenaFolder in ipairs(vars.Workspace.BossArenas:GetChildren()) do
                local BossArenaEnemiesFolder = BossArenaFolder:FindFirstChild("Enemies")
                if BossArenaEnemiesFolder then
                   ConnectEnemyRemoved(BossArenaEnemiesFolder)
@@ -1354,20 +1364,20 @@ task.spawn(function()
                      if Enemy.Name == EnemyName then
                         local EnemyPos = Enemy.PrimaryPart and Enemy.PrimaryPart.Position
                         if EnemyPos then
-                           local Distance = (PlayerPos - EnemyPos).magnitude
+                           local Distance = (vars.PlayerPos - EnemyPos).magnitude
 
-                           if AutoFarmTarget == "Closest" then
-                              if Distance < TargetDistance and Distance < SpellRange then
+                           if vars.AutoFarmTarget == "Closest" then
+                              if Distance < TargetDistance and Distance < vars.SpellRange then
                                  TargetEnemy = Enemy
                                  TargetDistance = Distance
                               end
-                           elseif AutoFarmTarget == "Farthest" then
-                              if Distance > TargetDistance and Distance < SpellRange then
+                           elseif vars.AutoFarmTarget == "Farthest" then
+                              if Distance > TargetDistance and Distance < vars.SpellRange then
                                  TargetEnemy = Enemy
                                  TargetDistance = Distance
                               end
-                           elseif AutoFarmTarget == "Never Hit" then
-                              if HitEnemies[Enemy] == nil and Distance < TargetDistance and Distance < SpellRange then
+                           elseif vars.AutoFarmTarget == "Never Hit" then
+                              if vars.HitEnemies[Enemy] == nil and Distance < TargetDistance and Distance < vars.SpellRange then
                                  TargetEnemy = Enemy
                                  TargetDistance = Distance
                               end
@@ -1380,14 +1390,14 @@ task.spawn(function()
          end
 
          -- perform attack
-         if TargetEnemy and TargetDistance < SpellRange then
-            if AutoFarmQuestToggle then 
+         if TargetEnemy and TargetDistance < vars.SpellRange then
+            if vars.AutoFarmQuestToggle then 
                game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer("CJ:4") 
             end
-            game:GetService("ReplicatedStorage").Remote.CastSpell:FireServer(SpellState, TargetEnemy)
+            game:GetService("ReplicatedStorage").Remote.CastSpell:FireServer(vars.SpellState, TargetEnemy)
             -- log hit enemy
-            if AutoFarmTarget == "Never Hit" then HitEnemies[TargetEnemy] = "hit" end
-            SpellState = 3 - SpellState -- toggle between 1 and 2
+            if vars.AutoFarmTarget == "Never Hit" then vars.HitEnemies[TargetEnemy] = "hit" end
+            vars.SpellState = 3 - vars.SpellState -- toggle between 1 and 2
          end
       end
    end
@@ -1397,7 +1407,7 @@ end)
 -- auto recharge
 task.spawn(function()
    while task.wait(0.1) do
-      if AutoRechargeToggle == true and ManaPercentage < 30 then 
+      if vars.AutoRechargeToggle == true and vars.ManaPercentage < 30 then 
          game:GetService("ReplicatedStorage").Remote.Recharge:FireServer() 
          --RefillMana();
       end
@@ -1418,22 +1428,22 @@ local function ParseTrackerText(inputtext)
 end
 
 -- PickupGuiContainer.ChildAdded handler
-PickupGuiContainer.ChildAdded:Connect(function(GuiFrame) 
+vars.PickupGuiContainer.ChildAdded:Connect(function(GuiFrame) 
    for _, TextLabel in ipairs(GuiFrame:GetChildren()) do
-      if TextLabel.Name == "Amount" and TrackedElements[GuiFrame] ~= true then
+      if TextLabel.Name == "Amount" and vars.TrackedElements[GuiFrame] ~= true then
          task.wait(0.1) -- wait for correct text
          local Amount, Type = ParseTrackerText(TextLabel.Text)
          
          -- Update Gold or XP depending on the type
          if Type == "Gold" then
-            if TrackGold == true then
-               TrackedGold = TrackedGold + Amount
-               TrackerLabel1:Set("Tracked Gold: " .. string.format("%0.0f", TrackedGold):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
+            if vars.TrackGold == true then
+               vars.TrackedGold = vars.TrackedGold + Amount
+               TrackerLabel1:Set("Tracked Gold: " .. string.format("%0.0f", vars.TrackedGold):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
             end
          elseif Type == "XP" then
-            if TrackXP == true then
-               TrackedXP = TrackedXP + Amount
-               TrackerLabel4:Set("Tracked XP: " .. string.format("%0.0f", TrackedXP):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
+            if vars.TrackXP == true then
+               vars.TrackedXP = vars.TrackedXP + Amount
+               TrackerLabel4:Set("Tracked XP: " .. string.format("%0.0f", vars.TrackedXP):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
             end
          else
             Rayfield:Notify({
@@ -1458,10 +1468,10 @@ PickupGuiContainer.ChildAdded:Connect(function(GuiFrame)
          end
 
          -- Mark this GuiFrame as tracked
-         TrackedElements[GuiFrame] = true
+         vars.TrackedElements[GuiFrame] = true
          GuiFrame.AncestryChanged:Connect(function(_, parent)
             if parent == nil then
-               TrackedElements[GuiFrame] = nil
+               vars.TrackedElements[GuiFrame] = nil
             end
          end)
          break
@@ -1472,44 +1482,44 @@ end)
 -- Tracker timer
 task.spawn(function()
    while task.wait(1) do
-      if TrackGold == true then
-         TrackedGoldTimer = TrackedGoldTimer + 1
-         GoldHours = math.floor(TrackedGoldTimer / 3600)
-         GoldMinutes = math.floor((TrackedGoldTimer % 3600) / 60)
-         GoldSeconds = TrackedGoldTimer % 60 
+      if vars.TrackGold == true then
+         vars.TrackedGoldTimer = vars.TrackedGoldTimer + 1
+         vars.GoldHours = math.floor(vars.TrackedGoldTimer / 3600)
+         vars.GoldMinutes = math.floor((vars.TrackedGoldTimer % 3600) / 60)
+         vars.GoldSeconds = vars.TrackedGoldTimer % 60 
 
-         if GoldHours > 0 then
-            GoldDurationString = GoldHours .. " hour(s), " .. GoldMinutes .. " minute(s), and " .. GoldSeconds .. " second(s)"
-         elseif GoldMinutes > 0 then
-            GoldDurationString = GoldMinutes .. " minute(s) and " .. GoldSeconds .. " second(s)"
+         if vars.GoldHours > 0 then
+            vars.GoldDurationString = vars.GoldHours .. " hour(s), " .. vars.GoldMinutes .. " minute(s), and " .. vars.GoldSeconds .. " second(s)"
+         elseif vars.GoldMinutes > 0 then
+            vars.GoldDurationString = vars.GoldMinutes .. " minute(s) and " .. vars.GoldSeconds .. " second(s)"
          else
-            GoldDurationString = GoldSeconds .. " second(s)"
+            vars.GoldDurationString = vars.GoldSeconds .. " second(s)"
          end
 
-         TrackerLabel2:Set("Tracked Duration: " .. GoldDurationString)
+         TrackerLabel2:Set("Tracked Duration: " .. vars.GoldDurationString)
 
-         GoldPerHour = math.floor(TrackedGold / TrackedGoldTimer * 3600)
-         TrackerLabel3:Set("Gold/Hour: " .. string.format("%0.0f", GoldPerHour):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
+         vars.GoldPerHour = math.floor(vars.TrackedGold / vars.TrackedGoldTimer * 3600)
+         TrackerLabel3:Set("Gold/Hour: " .. string.format("%0.0f", vars.GoldPerHour):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
       end
 
-      if TrackXP == true then
-         TrackedXPTimer = TrackedXPTimer + 1
-         XPHours = math.floor(TrackedXPTimer / 3600)
-         XPMinutes = math.floor((TrackedXPTimer % 3600) / 60)
-         XPSeconds = TrackedXPTimer % 60 
+      if vars.TrackXP == true then
+         vars.TrackedXPTimer = vars.TrackedXPTimer + 1
+         vars.XPHours = math.floor(vars.TrackedXPTimer / 3600)
+         vars.XPMinutes = math.floor((vars.TrackedXPTimer % 3600) / 60)
+         vars.XPSeconds = vars.TrackedXPTimer % 60 
 
-         if XPHours > 0 then
-            XPDurationString = XPHours .. " hour(s), " .. XPMinutes .. " minute(s), and " .. XPSeconds .. " second(s)"
-         elseif XPMinutes > 0 then
-            XPDurationString = XPMinutes .. " minute(s) and " .. XPSeconds .. " second(s)"
+         if vars.XPHours > 0 then
+            vars.XPDurationString = vars.XPHours .. " hour(s), " .. vars.XPMinutes .. " minute(s), and " .. vars.XPSeconds .. " second(s)"
+         elseif vars.XPMinutes > 0 then
+            vars.XPDurationString = vars.XPMinutes .. " minute(s) and " .. vars.XPSeconds .. " second(s)"
          else
-            XPDurationString = XPSeconds .. " second(s)"
+            vars.XPDurationString = vars.XPSeconds .. " second(s)"
          end
 
-         TrackerLabel5:Set("Tracked Duration: " .. XPDurationString)
+         TrackerLabel5:Set("Tracked Duration: " .. vars.XPDurationString)
 
-         XPPerHour = math.floor(TrackedXP / TrackedXPTimer * 3600)
-         TrackerLabel6:Set("XP/Hour: " .. string.format("%0.0f", XPPerHour):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
+         vars.XPPerHour = math.floor(vars.TrackedXP / vars.TrackedXPTimer * 3600)
+         TrackerLabel6:Set("XP/Hour: " .. string.format("%0.0f", vars.XPPerHour):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
       end
    end
 end)
@@ -1518,43 +1528,43 @@ end)
 -- walkspeed and jumppower management
 task.spawn(function()
    while task.wait(0.01) do
-      if WalkspeedToggleOld == true and WalkspeedToggle == false then
-         Humanoid.WalkSpeed = 16
+      if vars.WalkspeedToggleOld == true and vars.WalkspeedToggle == false then
+         vars.Humanoid.WalkSpeed = 16
       end
-      if WalkspeedToggle then
-         Humanoid.WalkSpeed = Walkspeed
+      if vars.WalkspeedToggle then
+         vars.Humanoid.WalkSpeed = vars.Walkspeed
       end
-      if JumpPowerToggleOld == true and JumpPowerToggle ==false then
-         Humanoid.JumpPower = 50
+      if vars.JumpPowerToggleOld == true and vars.JumpPowerToggle ==false then
+         vars.Humanoid.JumpPower = 50
       end
-      if JumpPowerToggle then
-         Humanoid.JumpPower = JumpPower
+      if vars.JumpPowerToggle then
+         vars.Humanoid.JumpPower = vars.JumpPower
       end
-      WalkspeedToggleOld = WalkspeedToggle
-      JumpPowerToggleOld = JumpPowerToggle
+      vars.WalkspeedToggleOld = vars.WalkspeedToggle
+      vars.JumpPowerToggleOld = vars.JumpPowerToggle
    end
 end)
 
 -- refill mana (doesnt work rn)
 local function RefillMana()
-   if Level ~= "Boss" then
-      game:GetService("ReplicatedStorage").Remote.TouchedRecharge:FireServer(Workspace.Levels.level:WaitForChild("SpawnPoint"))
+   if vars.Level ~= "Boss" then
+      game:GetService("ReplicatedStorage").Remote.TouchedRecharge:FireServer(vars.Workspace.Levels.level:WaitForChild("SpawnPoint"))
    end
 end
 
 -- no slow activation and timer
 game:GetService("ReplicatedStorage").Remote.CastSpell.OnClientEvent:Connect(function(plr)
    if plr == Player then
-      NoSlowTimer = 9
+      vars.NoSlowTimer = 9
    end
 end)
 task.spawn(function()
    while task.wait(0.1) do
-      if NoSlowTimer > 0 then
-         ApplyNoSlow = true
-         NoSlowTimer = NoSlowTimer - 1
-         if NoSlowTimer <= 0 then
-            ApplyNoSlow = false
+      if vars.NoSlowTimer > 0 then
+         vars.ApplyNoSlow = true
+         vars.NoSlowTimer = vars.NoSlowTimer - 1
+         if vars.NoSlowTimer <= 0 then
+            vars.ApplyNoSlow = false
          end
          task.wait(1)
       end
@@ -1565,8 +1575,8 @@ end)
 -- no slow management
 task.spawn(function()
    while task.wait(0.01) do
-      if (ApplyNoSlow == true) then
-         Humanoid.WalkSpeed = 16
+      if (vars.ApplyNoSlow == true) then
+         vars.Humanoid.WalkSpeed = 16
       end
    end
 end)
@@ -1574,31 +1584,31 @@ end)
 
 -- toggle and reset trackers
 ToggleGold = function()
-   TrackGold = not TrackGold
-   TrackerToggle1:Set(TrackGold)
+   vars.TrackGold = not vars.TrackGold
+   TrackerToggle1:Set(vars.TrackGold)
 end
 
 ToggleXP = function()
-   TrackXP = not TrackXP
-   TrackerToggle2:Set(TrackXP)
+   vars.TrackXP = not vars.TrackXP
+   TrackerToggle2:Set(vars.TrackXP)
 end
 
 ResetGold = function()
    TrackerLabel1:Set("Tracked Gold: 0")
-   TrackedGold = 0
+   vars.TrackedGold = 0
    TrackerLabel2:Set("Tracked Duration: 0 seconds")
-   TrackedGoldTimer = 0
+   vars.TrackedGoldTimer = 0
    TrackerLabel3:Set("Gold/Hour: 0")
-   GoldPerHour = 0
+   vars.GoldPerHour = 0
 end
 
 ResetXP = function()
    TrackerLabel4:Set("Tracked XP: 0")
-   TrackedXP = 0
+   vars.TrackedXP = 0
    TrackerLabel5:Set("Tracked Duration: 0 seconds")
-   TrackedXPTimer = 0
+   vars.TrackedXPTimer = 0
    TrackerLabel6:Set("XP/Hour: 0")
-   XPPerHour = 0   
+   vars.XPPerHour = 0   
 end
 
 -- xp stats
@@ -1643,37 +1653,36 @@ local function FormatValue(number)
     return formattedValue .. unit
 end
 
-
+-- xp level tracker
 task.spawn(function()
    while task.wait(1) do
-      local XPBar = GameGUI.Stats.ExperienceOutside.Bar
-      local XPText = GameGUI.Stats.ExperienceOutside.Amount
+      local XPBar = vars.GameGUI.Stats.ExperienceOutside.Bar
+      local XPText = vars.GameGUI.Stats.ExperienceOutside.Amount
       if XPBar and XPText then
-         PlayerLevel = Player.leaderstats.Level.Value
-         TrackerLabel9:Set("Level: " .. PlayerLevel)
-         PlayerXPPercentage = XPBar.Size.X.Scale
-         PlayerTotalXP = ParseTotalXPValue(XPText.Text)
-         if not PlayerTotalXP then return end
-         local MissingXP = round((1 - PlayerXPPercentage) * PlayerTotalXP)
+         vars.PlayerLevel = Player.leaderstats.Level.Value
+         TrackerLabel9:Set("Level: " .. vars.PlayerLevel)
+         vars.PlayerXPPercentage = XPBar.Size.X.Scale
+         vars.PlayerTotalXP = ParseTotalXPValue(XPText.Text)
+         local MissingXP = round((1 - vars.PlayerXPPercentage) * vars.PlayerTotalXP)
          TrackerLabel10:Set("XP To Next Level: " .. string.format("%0.0f", MissingXP):reverse():gsub("(%d%d%d)", "%1,"):reverse():gsub("^,", ""))
-         if XPPerHour and XPPerHour > 0 then
-            LevelTimer = round(MissingXP / XPPerHour * 3600)
-            LevelHours = math.floor(LevelTimer / 3600)
-            LevelMinutes = math.floor((LevelTimer % 3600) / 60)
-            LevelSeconds = LevelTimer % 60 
+         if vars.XPPerHour and vars.XPPerHour > 0 then
+            vars.LevelTimer = round(MissingXP / vars.XPPerHour * 3600)
+            vars.LevelHours = math.floor(vars.LevelTimer / 3600)
+            vars.LevelMinutes = math.floor((vars.LevelTimer % 3600) / 60)
+            vars.LevelSeconds = vars.LevelTimer % 60 
 
-            if LevelHours > 0 then
-               LevelDuration = LevelHours .. " hour(s), " .. LevelMinutes .. " minute(s), and " .. LevelSeconds .. " second(s)"
-            elseif LevelMinutes > 0 then
-               LevelDuration = LevelMinutes .. " minute(s) and " .. LevelSeconds .. " second(s)"
+            if vars.LevelHours > 0 then
+               vars.LevelDuration = vars.LevelHours .. " hour(s), " .. vars.LevelMinutes .. " minute(s), and " .. vars.LevelSeconds .. " second(s)"
+            elseif vars.LevelMinutes > 0 then
+               vars.LevelDuration = vars.LevelMinutes .. " minute(s) and " .. vars.LevelSeconds .. " second(s)"
             else
-               LevelDuration = LevelSeconds .. " second(s)"
+               vars.LevelDuration = vars.LevelSeconds .. " second(s)"
             end
 
-            TrackerLabel11:Set("Time To Next Level: " .. LevelDuration)
+            TrackerLabel11:Set("Time To Next Level: " .. vars.LevelDuration)
          end
       end
-      if XPPerHour and XPPerHour <= 0 then
+      if vars.XPPerHour and vars.XPPerHour <= 0 then
          TrackerLabel11:Set("Time To Next Level: No Data")
       end
    end
@@ -1682,23 +1691,23 @@ end)
 -- autoreoll until rarity
 task.spawn(function()
    while task.wait(0.1) do
-      local PetGUI = GameGUI.Pets
-      if PetGUI and AutoReroll == true then
-         if SelectedPet and SelectedPet > 0 then
-            if DeletePetLockTimer > 0 then 
+      local PetGUI = vars.GameGUI.Pets
+      if PetGUI and vars.AutoReroll == true then
+         if vars.SelectedPet and vars.SelectedPet > 0 then
+            if vars.DeletePetLockTimer > 0 then 
                if PetGUI.Visible == true then
-                  local slot = PetGUI.ListFrame.ListBackground.List:FindFirstChild(SelectedPet)
+                  local slot = PetGUI.ListFrame.ListBackground.List:FindFirstChild(vars.SelectedPet)
                   if slot then
                      local iscorrectrarity = false
-                     for _,rarity in pairs(SelectedRarities) do
+                     for _,rarity in pairs(vars.SelectedRarities) do
                         if rarity == slot.Rarity.Text then
                            iscorrectrarity = true
                            break
                         end
                      end
                      if iscorrectrarity == false then
-                        game:GetService("ReplicatedStorage").Remote.DeletePet:FireServer(SelectedPet)
-                        game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("OpenPetChest"):InvokeServer(SelectedChest)
+                        game:GetService("ReplicatedStorage").Remote.DeletePet:FireServer(vars.SelectedPet)
+                        game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("OpenPetChest"):InvokeServer(vars.SelectedChest)
                      else
                         Rayfield:Notify({
                            Title = "Pet Found!",
@@ -1706,7 +1715,7 @@ task.spawn(function()
                            Duration = 5,
                            Image = nil
                         })
-                        AutoReroll = false
+                        vars.AutoReroll = false
                         QOLToggle2:Set(false)                     
                      end
                   else
@@ -1716,7 +1725,7 @@ task.spawn(function()
                         Duration = 5,
                         Image = nil
                      })
-                     AutoReroll = false
+                     vars.AutoReroll = false
                      QOLToggle2:Set(false)   
                   end
                else
@@ -1726,7 +1735,7 @@ task.spawn(function()
                      Duration = 5,
                      Image = nil
                   })
-                  AutoReroll = false
+                  vars.AutoReroll = false
                   QOLToggle2:Set(false)
                end
             else
@@ -1736,7 +1745,7 @@ task.spawn(function()
                   Duration = 5,
                   Image = nil
                })
-               AutoReroll = false
+               vars.AutoReroll = false
                QOLToggle2:Set(false)
             end
          else
@@ -1748,7 +1757,7 @@ task.spawn(function()
                Actions = {
                },
             })
-            AutoReroll = false
+            vars.AutoReroll = false
             QOLToggle2:Set(false)
          end
       end
