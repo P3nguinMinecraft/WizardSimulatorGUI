@@ -6,6 +6,7 @@ if not game:IsLoaded() then game.Loaded:Wait() end
 local placeID = 3089478851
 if game.PlaceId ~= placeID then
    warn("Stopped WSG, not in Wizard Simulator")
+   return
 end
 
 print("[WSG] Loading Wizard Simulator GUI")
@@ -22,17 +23,88 @@ local Workspace = game:GetService("Workspace")
 local UserInputService = game:GetService("UserInputService")
 local GameGUI =  Player.PlayerGui.GameGui
 local PickupGuiContainer = GameGUI.Pickup
-local Level, Arena, PlayerPos
-local SpellState = 1
-local SelectedPet
+local GameState = {
+   Level = nil,
+   Arena = nil,
+   PlayerPos = nil,
+   SpellState = 1,
+   SelectedPet = nil,
+   SelectedPetSlotName = nil,
+   SelectedPetSlot = 1,
+   DeletePetLockTimer = 0,
+   AutoReroll = false,
+   SelectedRarities = {},
+   SelectedChestName = "Training Area Chest",
+   SelectedChest = "Chest1",
+   HomeTPBlack = false,
+   HomeTPTimer = 0,
+   LocationTPBlack = false,
+   LocationTPTimer = 0,
+   SelectedQuest = "LJ:1",
+   AutoQuestToggle = false,
+   HPot = nil,
+   MPot = nil,
+   HealthPercentage = Humanoid.Health / Humanoid.MaxHealth * 100,
+   PreviousMana = nil,
+   Mana = nil,
+   MaxMana = nil,
+   ManaPercentage = nil,
+   AutoHealthToggle = false,
+   AutoManaToggle = false,
+   AutoHealthThreshold = 0,
+   AutoManaThreshold = 0,
+   AutoFarmToggle = false,
+   AutoFarmEnemyNames = {"[1] Training Dummy"},
+   AutoFarmEnemies = {"Dummy"},
+   AutoFarmTarget = "Closest",
+   HitEnemies = {},
+   ConnectedEnemyFolders = {},
+   AutoFarmDelay = 1.5,
+   AutoFarmQuestToggle = false,
+   AutoRechargeToggle = false,
+   SpellRange = 100,
+   TrackGold = false,
+   TrackXP = false,
+   TrackedGold = 0,
+   TrackedXP = 0,
+   TrackedGoldTimer = 0,
+   TrackedXPTimer = 0,
+   GoldHours = nil,
+   GoldMinutes = nil,
+   GoldSeconds = nil,
+   GoldDurationString = nil,
+   GoldPerHour = nil,
+   XPHours = nil,
+   XPMinutes = nil,
+   XPSeconds = nil,
+   XPDurationString = nil,
+   XPPerHour = nil,
+   TrackedElements = {},
+   WalkspeedToggleOld = false,
+   WalkspeedToggle = false,
+   Walkspeed = 16,
+   JumpPowerToggleOld = false,
+   JumpPowerToggle = false,
+   JumpPower = 50,
+   NoSlow = false,
+   ApplyNoSlow = false,
+   NoSlowTimer = 0,
+   PlayerXPPercentage = nil,
+   PlayerLevel = nil,
+   PlayerTotalXP = nil,
+   LevelTimer = nil,
+   LevelMinutes = nil,
+   LevelSeconds = nil,
+   LevelHours = nil,
+   LevelDuration = nil
+}
+
 local PetSlotOptions = {
    [1] = "Main",
    [2] = "Secondary (gamepass)",
    [3] = "Mount"
 }
-local SelectedPetSlotName
-local SelectedPetSlot = 1
-local DeletePetLockTimer = 0
+
 local ChestOptions = {
    ["Chest1"] = "Training Area Chest",
    ["Chest2"] = "Werewolf Chest",
@@ -43,24 +115,7 @@ local ChestOptions = {
    ["CheapMountChest"] = "Cheap Mount Chest",
    ["MountChest"] = "Mount Chest"
 }
-local AutoReroll = false
-local SelectedRarities = {}
-local SelectedChestName = "Training Area Chest"
-local SelectedChest = "Chest1"
-local HomeTPBlack = false
-local HomeTPTimer = 0
-local LocationTPBlack = false
-local LocationTPTimer = 0
-local SelectedQuest = "LJ:1"
-local AutoQuestToggle = false
-local HPot, MPot
-local HealthPercentage = Humanoid.Health / Humanoid.MaxHealth * 100
-local PreviousMana, Mana, MaxMana, ManaPercentage
-local AutoHealthToggle = false
-local AutoManaToggle = false
-local AutoHealthThreshold = 0
-local AutoManaThreshold = 0
-local AutoFarmToggle = false
+
 local AutoFarmEnemyOptions = {
    ["Dummy"] = "[1] Training Dummy",
    ["DummyWarrior"] = "[3] Dummy Warrior",
@@ -122,38 +177,12 @@ local AutoFarmEnemyOptions = {
    ["CandyGolem"] = "[84] Candy Golem",
    ["StaticWaypoint"] = "Candy Chomper (also targets gates)"
 }
-local AutoFarmEnemyNames = {"[1] Training Dummy"}
-local AutoFarmEnemies = {"Dummy"}
-local AutoFarmTarget = "Closest"
-local HitEnemies = {}
-local ConnectedEnemyFolders = {}
-local AutoFarmDelay = 1.5
-local AutoFarmQuestToggle = false
-local AutoRechargeToggle = false
-local SpellRange = 100
-local TrackGold = false
-local TrackXP = false
-local TrackedGold = 0
-local TrackedXP = 0
-local TrackedGoldTimer = 0
-local TrackedXPTimer = 0
-local GoldHours, GoldMinutes, GoldSeconds, GoldDurationString, GoldPerHour, XPHours, XPMinutes, XPSeconds, XPDurationString, XPPerHour
+
 local Multipliers = {
    K = 1000, -- Thousand
    M = 1000000, -- Million
    B = 1000000000, -- Billion
 }
-local TrackedElements = {}
-local WalkspeedToggleOld = false
-local WalkspeedToggle = false
-local Walkspeed = 16
-local JumpPowerToggle = false
-local JumpPower = 50
-local NoSlow = false
-local ApplyNoSlow = false
-local NoSlowTimer = 0
-local PlayerXPPercentage, PlayerLevel, PlayerTotalXP
-local LevelTimer, LevelMinutes, LevelSeconds, LevelHours, LevelDuration
 
 print("[WSG] Loading Window")
 
@@ -163,29 +192,29 @@ local Window = Rayfield:CreateWindow({
    LoadingSubtitle = "by penguin",
    ConfigurationSaving = {
       Enabled = true,
-      FolderName = "wizardsimulatorgui", -- Create a custom folder for your hub/game
+      FolderName = "wizardsimulatorgui",
       FileName = "wizardsimulatorgui_config"
    },
    Discord = { 
       Enabled = true,
-      Invite = "fWncS2vFxn", -- The Discord invite code, do not include discord.gg/. E.g. discord.gg/ABCD would be ABCD
-      RememberJoins = true -- Set this to false to make them join the discord every time they load it up
+      Invite = "fWncS2vFxn",
+      RememberJoins = true
    },
-   KeySystem = false, -- Set this to true to use our key system
+   KeySystem = false,
    KeySettings = {
       Title = "Untitled",
       Subtitle = "Key System",
       Note = "No method of obtaining the key is provided",
-      FileName = "Key", -- It is recommended to use something unique as other scripts using Rayfield may overwrite your key file
-      SaveKey = true, -- The user's key wiCH be saved, but if you change the key, they wiCH be unable to use your script
-      GrabKeyFromSite = false, -- If this is true, set Key below to the RAW site you would like Rayfield to get the key from
-      Key = {"random"} -- List of keys that wiCH be accepted by the system, can be RAW file links (pastebin, github etc) or simple strings ("heCHo","key22")
+      FileName = "Key",
+      SaveKey = true,
+      GrabKeyFromSite = false,
+      Key = {"random"}
    }
 })
 
 print("[WSG] Loading Info Tab")
 
-local CreditTab = Window:CreateTab("Info", nil) -- Title, Image
+local CreditTab = Window:CreateTab("Info", nil)
 
 local CreditLabel1 = CreditTab:CreateLabel("Developed by penguin586970")
 
@@ -195,7 +224,7 @@ local CreditLabel3 = CreditTab:CreateLabel("For questions, concerns, contact win
 
 print("[WSG] Loading QOL Tab")
 
-local QOLTab = Window:CreateTab("QOL", nil) -- Title, Image
+local QOLTab = Window:CreateTab("QOL", nil)
 
 local QOLSection1 = QOLTab:CreateSection("Pets")
 
@@ -215,7 +244,7 @@ local QOLInput1 = QOLTab:CreateInput({
             Content = "Has to be a positive integer",
             Duration = 5,
             Image = nil,
-            Actions = { -- Notification Buttons
+            Actions = {
                Ignore = {
                   Name = "Debug",
                   Callback = function()
@@ -259,7 +288,7 @@ local QOLButton1 = QOLTab:CreateButton({
             Content = "Pet Number or Pet Slot missing!",
             Duration = 5,
             Image = nil,
-            Actions = { -- Notification Buttons
+            Actions = {
                Ignore = {
                   Name = "OK",
                   Callback = function()
@@ -286,7 +315,7 @@ local QOLButton3 = QOLTab:CreateButton({
       if SelectedPet and SelectedPet > 0 then
          if DeletePetLockTimer > 0 then 
             game:GetService("ReplicatedStorage").Remote.DeletePet:FireServer(SelectedPet)
-            if AutoRerollToggle == true then
+            if AutoReroll == true then
                game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("OpenPetChest"):InvokeServer(SelectedChest)
             end
          else
@@ -295,7 +324,7 @@ local QOLButton3 = QOLTab:CreateButton({
                Content = "Delete Pet Lock prevented you from deleting the selected pet. Press the button below to disable it for 1 minute.",
                Duration = 5,
                Image = nil,
-               Actions = { -- Notification Buttons
+               Actions = {
                   Ignore = {
                      Name = "Disable Lock",
                      Callback = function()
@@ -311,7 +340,7 @@ local QOLButton3 = QOLTab:CreateButton({
             Content = "You did not select a pet slot above!",
             Duration = 5,
             Image = nil,
-            Actions = { -- Notification Buttons
+            Actions = {
             },
          })
       end
@@ -327,7 +356,7 @@ local QOLButton4 = QOLTab:CreateButton({
          Content = "You may now delete pets for 60 seconds!",
          Duration = 5,
          Image = nil,
-         Actions = { -- Notification Buttons
+         Actions = {
          },
       })
    end,
@@ -391,7 +420,7 @@ local QOLButton5 = QOLTab:CreateButton({
             Content = "You did not select a pet slot above!",
             Duration = 5,
             Image = nil,
-            Actions = { -- Notification Buttons
+            Actions = {
             },
          })
       end
@@ -401,7 +430,7 @@ local QOLButton5 = QOLTab:CreateButton({
 local QOLToggle2 = QOLTab:CreateToggle({
    Name = "Roll Until Rarity",
    CurrentValue = false,
-   Flag = "QOLToggle2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "QOLToggle2",
    Callback = function(Value)
       AutoReroll = Value
    end,
@@ -442,7 +471,7 @@ local QOLSection3 = QOLTab:CreateSection("GUI Blockers")
 local QOLToggle3 = QOLTab:CreateToggle({
    Name = "Remove Home TP Black Screen",
    CurrentValue = false,
-   Flag = "QOLToggle3", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "QOLToggle3",
    Callback = function(Value)
       HomeTPBlack = Value
    end,
@@ -451,7 +480,7 @@ local QOLToggle3 = QOLTab:CreateToggle({
 local QOLToggle4 = QOLTab:CreateToggle({
    Name = "Remove Location TP Black Screen",
    CurrentValue = false,
-   Flag = "QOLToggle4", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "QOLToggle4",
    Callback = function(Value)
       LocationTPBlack = Value
    end,
@@ -460,15 +489,15 @@ local QOLToggle4 = QOLTab:CreateToggle({
 local QOLToggle5 = QOLTab:CreateToggle({
    Name = "Spell No Slow",
    CurrentValue = false,
-   Flag = "QOLToggle5", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "QOLToggle5",
    Callback = function(Value)
-      NoSlowToggle = Value
+      NoSlow = Value
    end,
 })
 
 print("[WSG] Loading Quest Tab")
 
-local QuestTab = Window:CreateTab("Quest", nil) -- Title, Image
+local QuestTab = Window:CreateTab("Quest", nil)
 
 local QuestParagraph1 = QuestTab:CreateParagraph({Title = "Quest Manipulation", Content = "Give yourself quests with this function, no matter the distance and level you are! DO NOT SPAM THESE REMOTES! NOTE THAT THERE IS A SMALL COOLDOWN BETWEEN FINISHING AND RECEIVING A QUEST."})
 
@@ -504,7 +533,7 @@ local QuestButton1 = QuestTab:CreateButton({
             Content = "No quest selected! How did this happen?",
             Duration = 5,
             Image = nil,
-            Actions = { -- Notification Buttons
+            Actions = {
                Ignore = {
                   Name = "Debug",
                   Callback = function()
@@ -521,7 +550,7 @@ local QuestKeybind1 = QuestTab:CreateKeybind({
    Name = "Keybind", 
    CurrentKeybind = "F",
    HoldToInteract = false,
-   Flag = "QuestKeybind1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "QuestKeybind1",
    Callback = function(Keybind)
       if SelectedQuest then
             game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer(SelectedQuest)
@@ -531,7 +560,7 @@ local QuestKeybind1 = QuestTab:CreateKeybind({
             Content = "No quest selected! How did this happen?",
             Duration = 5,
             Image = nil,
-            Actions = { -- Notification Buttons
+            Actions = {
                Ignore = {
                   Name = "Debug",
                   Callback = function()
@@ -555,7 +584,7 @@ local QuestKeybind2 = QuestTab:CreateKeybind({
    Name = "Keybind",
    CurrentKeybind = "F",
    HoldToInteract = false,
-   Flag = "QuestKeybind2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "QuestKeybind2",
    Callback = function(Keybind)
       game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("CancelQuest"):FireServer()
    end,
@@ -564,7 +593,7 @@ local QuestKeybind2 = QuestTab:CreateKeybind({
 local QuestToggle1 = QuestTab:CreateToggle({
    Name = "Auto Give Quest",
    CurrentValue = false,
-   Flag = "QuestToggle1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "QuestToggle1",
    Callback = function(Value)
       AutoQuestToggle = Value
    end,
@@ -574,7 +603,7 @@ local QuestParagraph2 = QuestTab:CreateParagraph({Title = "Auto Give", Content =
 
 print("[WSG] Loading Potion Tab")
 
-local PotionTab = Window:CreateTab("Potion", nil) -- Title, Image
+local PotionTab = Window:CreateTab("Potion", nil)
 
 local PotionParagraph1 = PotionTab:CreateParagraph({Title = "Potion Triggers", Content = "Click on the buttons to pick up a potion in the world (if avaliable) Use Auto Health/Mana to automatically pick up potions when value falls below threshold."})
 
@@ -593,7 +622,7 @@ local PotionKeybind1 = PotionTab:CreateKeybind({
    Name = "Keybind",
    CurrentKeybind = "F",
    HoldToInteract = false,
-   Flag = "PotionKeybind1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "PotionKeybind1",
    Callback = function(Keybind)
       if HPot then firetouchinterest(Humanoid.LeftLeg, HPot.Forcefield, 0) end
    end,
@@ -602,7 +631,7 @@ local PotionKeybind1 = PotionTab:CreateKeybind({
 local PotionToggle1 = PotionTab:CreateToggle({
    Name = "Auto Health",
    CurrentValue = false,
-   Flag = "PotionToggle1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "PotionToggle1",
    Callback = function(Value)
       AutoHealthToggle = Value
    end,
@@ -614,7 +643,7 @@ local PotionSlider1 = PotionTab:CreateSlider({
    Increment = 1,
    Suffix = "% HP",
    CurrentValue = 50,
-   Flag = "PotionSlider1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "PotionSlider1",
    Callback = function(Value)
       AutoHealthThreshold = Value
    end,
@@ -634,7 +663,7 @@ local PotionKeybind2 = PotionTab:CreateKeybind({
    Name = "Keybind",
    CurrentKeybind = "F",
    HoldToInteract = false,
-   Flag = "PotionKeybind2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "PotionKeybind2",
    Callback = function(Keybind)
       if MPot then firetouchinterest(Humanoid.LeftLeg, MPot.Forcefield, 0) end
    end,
@@ -643,7 +672,7 @@ local PotionKeybind2 = PotionTab:CreateKeybind({
 local PotionToggle2 = PotionTab:CreateToggle({
    Name = "Auto Mana",
    CurrentValue = false,
-   Flag = "PotionToggle2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "PotionToggle2",
    Callback = function(Value)
       AutoManaToggle = Value
    end,
@@ -655,7 +684,7 @@ local PotionSlider2 = PotionTab:CreateSlider({
    Increment = 1,
    Suffix = "% Mana",
    CurrentValue = 70,
-   Flag = "PotionSlider2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "PotionSlider2",
    Callback = function(Value)
       AutoManaThreshold = Value
    end,
@@ -663,14 +692,14 @@ local PotionSlider2 = PotionTab:CreateSlider({
 
 print("[WSG] Loading Auto Farm Tab")
 
-local AutoFarmTab = Window:CreateTab("Auto Farm", nil) -- Title, Image
+local AutoFarmTab = Window:CreateTab("Auto Farm", nil)
 
 local AutoFarmParagraph1 = AutoFarmTab:CreateParagraph({Title = "Auto Farm Function", Content = "Automatically farms an enemy, targetting the closest one that is within range of the spell chosen. Configure other settings below."})
 
 local AutoFarmToggle1 = AutoFarmTab:CreateToggle({
    Name = "Auto Farm Toggle",
    CurrentValue = false,
-   Flag = "AutoFarmToggle1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "AutoFarmToggle1",
    Callback = function(Value)
       AutoFarmToggle = Value
    end,
@@ -680,7 +709,7 @@ local AutoFarmKeybind1 = AutoFarmTab:CreateKeybind({
    Name = "Keybind",
    CurrentKeybind = "F",
    HoldToInteract = false,
-   Flag = "AutoFarmKeybind1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "AutoFarmKeybind1",
    Callback = function(Keybind)
       AutoFarmToggle = not AutoFarmToggle
       AutoFarmToggle1:Set(AutoFarmToggle)
@@ -689,7 +718,7 @@ local AutoFarmKeybind1 = AutoFarmTab:CreateKeybind({
          Content = "Toggled!",
          Duration = 5,
          Image = nil,
-         Actions = { -- Notification Buttons
+         Actions = {
          },
       })
    end,
@@ -763,7 +792,7 @@ local AutoFarmDropdown1 = AutoFarmTab:CreateDropdown({
    },
    CurrentOption = {"[1] Training Dummy"},
    MultipleOptions = true,
-   Flag = "AutoFarmDropdown1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "AutoFarmDropdown1",
    Callback = function(Options)
       AutoFarmEnemyNames = {}
       AutoFarmEnemies = {}
@@ -786,7 +815,7 @@ local AutoFarmDropdown2 = AutoFarmTab:CreateDropdown({
    Options = {"Closest","Farthest","Never Hit"},
    CurrentOption = {"Closest"},
    MultipleOptions = false,
-   Flag = "AutoFarmDropdown2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "AutoFarmDropdown2",
    Callback = function(Option)
       AutoFarmTarget = Option[1]
    end,
@@ -801,7 +830,7 @@ local AutoFarmButton1 = AutoFarmTab:CreateButton({
          Content = "All tracked enemies cleared. This is really useful because this script tries to attack enemies through walls, and does not register if they are actually hit.",
          Duration = 5,
          Image = nil,
-         Actions = { -- Notification Buttons
+         Actions = {
          },
       })
    end,
@@ -815,7 +844,7 @@ local AutoFarmSlider1 = AutoFarmTab:CreateSlider({
    Increment = 0.1,
    Suffix = "sec",
    CurrentValue = 1.5,
-   Flag = "AutoFarmSlider1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "AutoFarmSlider1",
    Callback = function(Value)
       AutoFarmDelay = Value
    end,
@@ -829,7 +858,7 @@ local AutoFarmSlider2 = AutoFarmTab:CreateSlider({
    Increment = 1,
    Suffix = "studs",
    CurrentValue = 85,
-   Flag = "AutoFarmSlider2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "AutoFarmSlider2",
    Callback = function(Value)
       SpellRange = Value
    end,
@@ -840,7 +869,7 @@ local AutoFarmParagraph4 = AutoFarmTab:CreateParagraph({Title = "Auto Farm Quest
 local AutoFarmToggle2 = AutoFarmTab:CreateToggle({
    Name = "Auto Farm Quest",
    CurrentValue = false,
-   Flag = "AutoFarmToggle2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "AutoFarmToggle2",
    Callback = function(Value)
       AutoFarmQuestToggle = Value
    end,
@@ -849,7 +878,7 @@ local AutoFarmToggle2 = AutoFarmTab:CreateToggle({
 local AutoFarmToggle3 = AutoFarmTab:CreateToggle({
    Name = "Auto Recharge at 30% (I think it requires gamepass)",
    CurrentValue = false,
-   Flag = "AutoFarmToggle3", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "AutoFarmToggle3",
    Callback = function(Value)
       AutoRechargeToggle = Value
    end,
@@ -857,8 +886,9 @@ local AutoFarmToggle3 = AutoFarmTab:CreateToggle({
 
 print("[WSG] Loading Tracker Tab")
 
-local TrackerTab = Window:CreateTab("Tracker", nil) -- Title, Image
+local TrackerTab = Window:CreateTab("Tracker", nil)
 
+local ToggleGold, ToggleXP
 local TrackerButton1 = TrackerTab:CreateButton({
    Name = "Toggle Trackers",
    Callback = function()
@@ -869,12 +899,13 @@ local TrackerButton1 = TrackerTab:CreateButton({
          Content = "Toggled both Gold and XP trackers.",
          Duration = 5,
          Image = nil,
-         Actions = { -- Notification Buttons
+         Actions = {
          },
       })
    end,
 })
 
+local ResetGold, ResetXP
 local TrackerButton2 = TrackerTab:CreateButton({
    Name = "Reset Trackers",
    Callback = function()
@@ -885,7 +916,7 @@ local TrackerButton2 = TrackerTab:CreateButton({
          Content = "Reset both Gold and XP trackers.",
          Duration = 5,
          Image = nil,
-         Actions = { -- Notification Buttons
+         Actions = {
          },
       })
    end,
@@ -902,7 +933,7 @@ local TrackerLabel3 = TrackerTab:CreateLabel("Gold/Hour: 0")
 local TrackerToggle1 = TrackerTab:CreateToggle({
    Name = "Track Gold",
    CurrentValue = false,
-   Flag = "TrackerToggle1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "TrackerToggle1",
    Callback = function(Value)
       TrackGold = Value
    end,
@@ -917,7 +948,7 @@ local TrackerButton3 = TrackerTab:CreateButton({
          Content = "Tracked Gold has been reset for this session.",
          Duration = 5,
          Image = nil,
-         Actions = { -- Notification Buttons
+         Actions = {
          },
       })
    end,
@@ -934,7 +965,7 @@ local TrackerLabel6 = TrackerTab:CreateLabel("XP/Hour: 0")
 local TrackerToggle2 = TrackerTab:CreateToggle({
    Name = "Track XP",
    CurrentValue = false,
-   Flag = "TrackerToggle2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "TrackerToggle2",
    Callback = function(Value)
       TrackXP = Value
    end,
@@ -949,7 +980,7 @@ local TrackerButton4 = TrackerTab:CreateButton({
          Content = "Tracked XP has been reset for this session.",
          Duration = 5,
          Image = nil,
-         Actions = { -- Notification Buttons
+         Actions = {
          },
       })
    end,
@@ -969,7 +1000,7 @@ local TrackerLabel11 = TrackerTab:CreateLabel("Time to Next Level: No Data")
 
 print("[WSG] Loading Tools Tab")
 
-local ToolTab = Window:CreateTab("Tools", nil) -- Title, Image
+local ToolTab = Window:CreateTab("Tools", nil)
 
 local ToolParagraph1 = ToolTab:CreateParagraph({Title = "Small Things", Content = "These are probably availiable in other universal scripts but I find it easy to access here. Turning walkspeed on and keeping it at 16 will cancel the spell delay."})
 
@@ -978,7 +1009,7 @@ local ToolLabel1 = ToolTab:CreateLabel("Walkspeed")
 local ToolToggle1 = ToolTab:CreateToggle({
    Name = "Walkspeed Toggle",
    CurrentValue = false,
-   Flag = "ToolToggle1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "ToolToggle1",
    Callback = function(Value)
       WalkspeedToggle = Value
    end,
@@ -990,7 +1021,7 @@ local ToolSlider1 = ToolTab:CreateSlider({
    Increment = 1,
    Suffix = "Studs/Sec",
    CurrentValue = 16,
-   Flag = "ToolSlider1", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "ToolSlider1",
    Callback = function(Value)
       Walkspeed = Value
    end,
@@ -999,7 +1030,7 @@ local ToolSlider1 = ToolTab:CreateSlider({
 local ToolToggle2 = ToolTab:CreateToggle({
    Name = "Jump Power Toggle",
    CurrentValue = false,
-   Flag = "ToolToggle2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "ToolToggle2",
    Callback = function(Value)
       JumpPowerToggle = Value
    end,
@@ -1011,7 +1042,7 @@ local ToolSlider2 = ToolTab:CreateSlider({
    Increment = 1,
    Suffix = "Studs",
    CurrentValue = 50,
-   Flag = "ToolSlider2", -- A flag is the identifier for the configuration file, make sure every element has a different flag if you're using configuration saving to ensure no overlaps
+   Flag = "ToolSlider2",
    Callback = function(Value)
       JumpPower = Value
    end,
@@ -1070,7 +1101,7 @@ local ToolButton7 = ToolTab:CreateButton({
 
 print("[WSG] Loading Options Tab")
 
-local OptionsTab = Window:CreateTab("Options", nil) -- Title, Image
+local OptionsTab = Window:CreateTab("Options", nil)
 
 local OptionsDropdown1 = OptionsTab:CreateDropdown({
    Name = "Themes",
@@ -1085,7 +1116,7 @@ local OptionsDropdown1 = OptionsTab:CreateDropdown({
 
 print("[WSG] Loading Debug Tab")
 
-local DebugTab = Window:CreateTab("Debug", nil) -- Title, Image
+local DebugTab = Window:CreateTab("Debug", nil)
 
 local DebugButton1 = DebugTab:CreateButton({
    Name = "Reset All Keybinds",
@@ -1134,7 +1165,7 @@ local DebugButton5 = DebugTab:CreateButton({
 print("[WSG] Loading Scripts")
 
 -- level and position
-spawn(function()
+task.spawn(function()
    while task.wait(0.1) do
       Level = Player.Level.Value
       if Level == "Boss" then
@@ -1157,7 +1188,7 @@ end)
 
 
 -- pet lock
-spawn(function()
+task.spawn(function()
    while task.wait(1) do
       if DeletePetLockTimer > 0 then
          DeletePetLockTimer = DeletePetLockTimer - 1
@@ -1174,7 +1205,7 @@ GameGUI.ChildAdded:Connect(function(Object)
       end
    end
 end)
-spawn(function()
+task.spawn(function()
    while task.wait() do
       if HomeTPTimer == 2 then
             Rayfield:Notify({
@@ -1201,7 +1232,7 @@ GameGUI:FindFirstChild("Black").ChildAdded:Connect(function()
       end
    end
 end)
-spawn(function()
+task.spawn(function()
    while task.wait() do
       if LocationTPTimer == 3 then
             Rayfield:Notify({
@@ -1225,7 +1256,7 @@ end)
 
 
 -- mana detector
-spawn(function()
+task.spawn(function()
    while task.wait(0.1) do
       Mana = Player.Mana.value
       MaxMana = Player.MaxMana.value
@@ -1238,7 +1269,7 @@ end)
 
 
 -- auto potion loop
-spawn(function()
+task.spawn(function()
    while task.wait(0.1) do
       local success1 = pcall(function()
          HPot = Workspace.Effects:FindFirstChild("HealthPotion")
@@ -1275,10 +1306,9 @@ local function ConnectEnemyRemoved(Folder)
    end
 end
 
-spawn(function()
+task.spawn(function()
    while task.wait(AutoFarmDelay/2) do
       if PlayerPos and AutoFarmToggle then
-         
          local TargetEnemy = nil
          local TargetDistance = AutoFarmTarget == "Farthest" and 0 or math.huge -- if targetting farthest default is 0, otherwise its math.huge
          for _, EnemyName in ipairs(AutoFarmEnemies) do
@@ -1348,7 +1378,6 @@ spawn(function()
                end
             end
          end
-         
 
          -- perform attack
          if TargetEnemy and TargetDistance < SpellRange then
@@ -1366,7 +1395,7 @@ end)
 
 
 -- auto recharge
-spawn(function()
+task.spawn(function()
    while task.wait(0.1) do
       if AutoRechargeToggle == true and ManaPercentage < 30 then 
          game:GetService("ReplicatedStorage").Remote.Recharge:FireServer() 
@@ -1441,7 +1470,7 @@ PickupGuiContainer.ChildAdded:Connect(function(GuiFrame)
 end)
 
 -- Tracker timer
-spawn(function()
+task.spawn(function()
    while task.wait(1) do
       if TrackGold == true then
          TrackedGoldTimer = TrackedGoldTimer + 1
@@ -1487,7 +1516,7 @@ end)
 
 
 -- walkspeed and jumppower management
-spawn(function()
+task.spawn(function()
    while task.wait(0.01) do
       if WalkspeedToggleOld == true and WalkspeedToggle == false then
          Humanoid.WalkSpeed = 16
@@ -1507,8 +1536,8 @@ spawn(function()
 end)
 
 -- refill mana (doesnt work rn)
-function RefillMana()
-   if level ~= "Boss" then
+local function RefillMana()
+   if Level ~= "Boss" then
       game:GetService("ReplicatedStorage").Remote.TouchedRecharge:FireServer(Workspace.Levels.level:WaitForChild("SpawnPoint"))
    end
 end
@@ -1519,7 +1548,7 @@ game:GetService("ReplicatedStorage").Remote.CastSpell.OnClientEvent:Connect(func
       NoSlowTimer = 9
    end
 end)
-spawn(function()
+task.spawn(function()
    while task.wait(0.1) do
       if NoSlowTimer > 0 then
          ApplyNoSlow = true
@@ -1534,7 +1563,7 @@ end)
 
 
 -- no slow management
-spawn(function()
+task.spawn(function()
    while task.wait(0.01) do
       if (ApplyNoSlow == true) then
          Humanoid.WalkSpeed = 16
@@ -1544,17 +1573,17 @@ end)
 
 
 -- toggle and reset trackers
-function ToggleGold()
+ToggleGold = function()
    TrackGold = not TrackGold
    TrackerToggle1:Set(TrackGold)
 end
 
-function ToggleXP()
+ToggleXP = function()
    TrackXP = not TrackXP
    TrackerToggle2:Set(TrackXP)
 end
 
-function ResetGold()
+ResetGold = function()
    TrackerLabel1:Set("Tracked Gold: 0")
    TrackedGold = 0
    TrackerLabel2:Set("Tracked Duration: 0 seconds")
@@ -1563,7 +1592,7 @@ function ResetGold()
    GoldPerHour = 0
 end
 
-function ResetXP()
+ResetXP = function()
    TrackerLabel4:Set("Tracked XP: 0")
    TrackedXP = 0
    TrackerLabel5:Set("Tracked Duration: 0 seconds")
@@ -1615,7 +1644,7 @@ local function FormatValue(number)
 end
 
 
-spawn(function()
+task.spawn(function()
    while task.wait(1) do
       local XPBar = GameGUI.Stats.ExperienceOutside.Bar
       local XPText = GameGUI.Stats.ExperienceOutside.Amount
@@ -1651,7 +1680,7 @@ spawn(function()
 end)
 
 -- autoreoll until rarity
-spawn(function()
+task.spawn(function()
    while task.wait(0.1) do
       local PetGUI = GameGUI.Pets
       if PetGUI and AutoReroll == true then
@@ -1716,7 +1745,7 @@ spawn(function()
                Content = "You did not select a pet slot above!",
                Duration = 5,
                Image = nil,
-               Actions = { -- Notification Buttons
+               Actions = {
                },
             })
             AutoReroll = false
