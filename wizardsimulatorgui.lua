@@ -17,13 +17,14 @@ local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 -- local vars
 local Player = game:GetService("Players").LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+local Workspace = game:GetService("Workspace")
+local GameGUI = Player.PlayerGui.GameGui
+local PickupGuiContainer = Player.PlayerGui.GameGui.Pickup
+
+local Humanoid = Player.Character:WaitForChild("Humanoid")
+local RootPart = Player.Character:WaitForChild("HumanoidRootPart")
 local vars = {
-   Humanoid = Player.Character:WaitForChild("Humanoid"),
-   RootPart = Player.Character:WaitForChild("HumanoidRootPart"),
-   Workspace = game:GetService("Workspace"),
-   UserInputService = game:GetService("UserInputService"),
-   GameGUI = Player.PlayerGui.GameGui,
-   PickupGuiContainer = Player.PlayerGui.GameGui.Pickup,
    Level = nil,
    Arena = nil,
    PlayerPos = nil,
@@ -99,11 +100,7 @@ local vars = {
    LevelDuration = nil
 }
 
-local Humanoid = vars.Humanoid
-local RootPart = vars.RootPart
-local GameGUI = vars.GameGUI
-local PickupGuiContainer = vars.PickupGuiContainer
-vars.HealthPercentage = vars.Humanoid.Health / vars.Humanoid.MaxHealth * 100
+vars.HealthPercentage = Humanoid.Health / Humanoid.MaxHealth * 100
 
 local PetSlotOptions = {
    [1] = "Main",
@@ -624,7 +621,7 @@ local PotionSection1 = PotionTab:CreateSection("Health")
 local PotionButton1 = PotionTab:CreateButton({
    Name = "Get Health Potion",
    Callback = function()
-      if vars.HPot then firetouchinterest(vars.Humanoid.LeftLeg, vars.HPot.Forcefield, 0) end
+      if vars.HPot then firetouchinterest(RootPart, vars.HPot.Forcefield, 0) end
    end,
 })
 
@@ -634,7 +631,7 @@ local PotionKeybind1 = PotionTab:CreateKeybind({
    HoldToInteract = false,
    Flag = "PotionKeybind1",
    Callback = function(Keybind)
-      if vars.HPot then firetouchinterest(vars.Humanoid.LeftLeg, vars.HPot.Forcefield, 0) end
+      if vars.HPot then firetouchinterest(RootPart, vars.HPot.Forcefield, 0) end
    end,
 })
 
@@ -665,7 +662,7 @@ local PotionSection2 = PotionTab:CreateSection("Mana")
 local PotionButton2 = PotionTab:CreateButton({
    Name = "Get Mana Potion",
    Callback = function()
-      if vars.MPot then firetouchinterest(vars.Humanoid.LeftLeg, vars.MPot.Forcefield, 0) end
+      if vars.MPot then firetouchinterest(Humanoid.LeftLeg, vars.MPot.Forcefield, 0) end
    end,
 })
 
@@ -675,7 +672,7 @@ local PotionKeybind2 = PotionTab:CreateKeybind({
    HoldToInteract = false,
    Flag = "PotionKeybind2",
    Callback = function(Keybind)
-      if vars.MPot then firetouchinterest(vars.Humanoid.LeftLeg, vars.MPot.Forcefield, 0) end
+      if vars.MPot then firetouchinterest(Humanoid.LeftLeg, vars.MPot.Forcefield, 0) end
    end,
 })
 
@@ -1188,7 +1185,7 @@ task.spawn(function()
 end)
 
 -- input detector
-vars.UserInputService.InputBegan:Connect(function(input)
+UserInputService.InputBegan:Connect(function(input)
    if vars.AutoQuestToggle then
       if input.KeyCode == Enum.KeyCode.E or input.KeyCode == Enum.KeyCode.Q then
          game:GetService("ReplicatedStorage").Remote.AcceptQuest:FireServer("CJ:4")
@@ -1207,7 +1204,7 @@ task.spawn(function()
 end)
 
 -- home TP black
-vars.GameGUI.ChildAdded:Connect(function(Object)
+GameGUI.ChildAdded:Connect(function(Object)
    if Object.Name == "Frame" and vars.HomeTPBlack == true then
       Object.Visible = false
       if vars.HomeTPTimer == 0 then
@@ -1234,9 +1231,9 @@ end)
 
 
 -- location TP black
-vars.GameGUI:FindFirstChild("Black").ChildAdded:Connect(function()
+GameGUI:FindFirstChild("Black").ChildAdded:Connect(function()
    if vars.LocationTPBlack == true then
-      vars.GameGUI.Black.Visible = false
+      GameGUI.Black.Visible = false
       if vars.LocationTPTimer == 0 then
          vars.LocationTPTimer = 3
       end
@@ -1260,8 +1257,8 @@ task.spawn(function()
 end)
 
 -- health detector
-vars.Humanoid.HealthChanged:Connect(function()
-    vars.HealthPercentage = vars.Humanoid.Health / vars.Humanoid.MaxHealth * 100
+Humanoid.HealthChanged:Connect(function()
+    vars.HealthPercentage = Humanoid.Health / Humanoid.MaxHealth * 100
 end)
 
 
@@ -1282,10 +1279,10 @@ end)
 task.spawn(function()
    while task.wait(0.1) do
       local success1 = pcall(function()
-         vars.HPot = vars.Workspace.Effects:FindFirstChild("HealthPotion")
+         vars.HPot = Workspace.Effects:FindFirstChild("HealthPotion")
       end)
       local success2 = pcall(function()
-         vars.MPot = vars.Workspace.Effects:FindFirstChild("ManaPotion")
+         vars.MPot = Workspace.Effects:FindFirstChild("ManaPotion")
       end)
       if vars.HPot then
          PotionButton1:Set("Get Health Potion - Avaliable")
@@ -1298,10 +1295,10 @@ task.spawn(function()
          PotionButton2:Set("Get Mana Potion - Unavaliable")
       end
       if vars.AutoHealthToggle == true and vars.HealthPercentage < vars.AutoHealthThreshold then
-         if vars.HPot then firetouchinterest(vars.Humanoid.LeftLeg, vars.HPot.Forcefield, 0) end
+         if vars.HPot then firetouchinterest(Humanoid.LeftLeg, vars.HPot.Forcefield, 0) end
       end
       if vars.AutoManaToggle == true and vars.ManaPercentage < vars.AutoManaThreshold then
-         if vars.MPot then firetouchinterest(vars.Humanoid.LeftLeg, vars.MPot.Forcefield, 0) end
+         if vars.MPot then firetouchinterest(Humanoid.LeftLeg, vars.MPot.Forcefield, 0) end
       end
    end
 end)
@@ -1323,7 +1320,7 @@ task.spawn(function()
          local TargetDistance = vars.AutoFarmTarget == "Farthest" and 0 or math.huge -- if targetting farthest default is 0, otherwise its math.huge
          for _, EnemyName in ipairs(vars.AutoFarmEnemies) do
             -- search levels
-            for _, LevelFolder in ipairs(vars.Workspace.Levels:GetChildren()) do
+            for _, LevelFolder in ipairs(Workspace.Levels:GetChildren()) do
                local LevelEnemiesFolder = LevelFolder:FindFirstChild("Enemies")
                if LevelEnemiesFolder then
                   ConnectEnemyRemoved(LevelEnemiesFolder)
@@ -1356,7 +1353,7 @@ task.spawn(function()
             end
 
             -- search boss arenas
-            for _, BossArenaFolder in ipairs(vars.Workspace.BossArenas:GetChildren()) do
+            for _, BossArenaFolder in ipairs(Workspace.BossArenas:GetChildren()) do
                local BossArenaEnemiesFolder = BossArenaFolder:FindFirstChild("Enemies")
                if BossArenaEnemiesFolder then
                   ConnectEnemyRemoved(BossArenaEnemiesFolder)
@@ -1428,7 +1425,7 @@ local function ParseTrackerText(inputtext)
 end
 
 -- PickupGuiContainer.ChildAdded handler
-vars.PickupGuiContainer.ChildAdded:Connect(function(GuiFrame) 
+PickupGuiContainer.ChildAdded:Connect(function(GuiFrame) 
    for _, TextLabel in ipairs(GuiFrame:GetChildren()) do
       if TextLabel.Name == "Amount" and vars.TrackedElements[GuiFrame] ~= true then
          task.wait(0.1) -- wait for correct text
@@ -1529,16 +1526,16 @@ end)
 task.spawn(function()
    while task.wait(0.01) do
       if vars.WalkspeedToggleOld == true and vars.WalkspeedToggle == false then
-         vars.Humanoid.WalkSpeed = 16
+         Humanoid.WalkSpeed = 16
       end
       if vars.WalkspeedToggle then
-         vars.Humanoid.WalkSpeed = vars.Walkspeed
+         Humanoid.WalkSpeed = vars.Walkspeed
       end
       if vars.JumpPowerToggleOld == true and vars.JumpPowerToggle ==false then
-         vars.Humanoid.JumpPower = 50
+         Humanoid.JumpPower = 50
       end
       if vars.JumpPowerToggle then
-         vars.Humanoid.JumpPower = vars.JumpPower
+         Humanoid.JumpPower = vars.JumpPower
       end
       vars.WalkspeedToggleOld = vars.WalkspeedToggle
       vars.JumpPowerToggleOld = vars.JumpPowerToggle
@@ -1548,7 +1545,7 @@ end)
 -- refill mana (doesnt work rn)
 local function RefillMana()
    if vars.Level ~= "Boss" then
-      game:GetService("ReplicatedStorage").Remote.TouchedRecharge:FireServer(vars.Workspace.Levels.level:WaitForChild("SpawnPoint"))
+      game:GetService("ReplicatedStorage").Remote.TouchedRecharge:FireServer(Workspace.Levels.level:WaitForChild("SpawnPoint"))
    end
 end
 
@@ -1576,7 +1573,7 @@ end)
 task.spawn(function()
    while task.wait(0.01) do
       if (vars.ApplyNoSlow == true) then
-         vars.Humanoid.WalkSpeed = 16
+         Humanoid.WalkSpeed = 16
       end
    end
 end)
@@ -1656,8 +1653,8 @@ end
 -- xp level tracker
 task.spawn(function()
    while task.wait(1) do
-      local XPBar = vars.GameGUI.Stats.ExperienceOutside.Bar
-      local XPText = vars.GameGUI.Stats.ExperienceOutside.Amount
+      local XPBar = GameGUI.Stats.ExperienceOutside.Bar
+      local XPText = GameGUI.Stats.ExperienceOutside.Amount
       if XPBar and XPText then
          vars.PlayerLevel = Player.leaderstats.Level.Value
          TrackerLabel9:Set("Level: " .. vars.PlayerLevel)
@@ -1671,12 +1668,20 @@ task.spawn(function()
             vars.LevelMinutes = math.floor((vars.LevelTimer % 3600) / 60)
             vars.LevelSeconds = vars.LevelTimer % 60 
 
+            -- if vars.LevelHours > 0 then
+            --    vars.LevelDuration = vars.LevelHours .. " hour(s), " .. vars.LevelMinutes .. " minute(s), and " .. vars.LevelSeconds .. " second(s)"
+            -- elseif vars.LevelMinutes > 0 then
+            --    vars.LevelDuration = vars.LevelMinutes .. " minute(s) and " .. vars.LevelSeconds .. " second(s)"
+            -- else
+            --    vars.LevelDuration = vars.LevelSeconds .. " second(s)"
+            -- end
+
             if vars.LevelHours > 0 then
-               vars.LevelDuration = vars.LevelHours .. " hour(s), " .. vars.LevelMinutes .. " minute(s), and " .. vars.LevelSeconds .. " second(s)"
+               vars.LevelDuration = vars.LevelHours .. ":" .. vars.LevelMinutes .. ":" .. vars.LevelSeconds .. " (h,m,s)"
             elseif vars.LevelMinutes > 0 then
-               vars.LevelDuration = vars.LevelMinutes .. " minute(s) and " .. vars.LevelSeconds .. " second(s)"
+               vars.LevelDuration = vars.LevelMinutes .. ":" .. vars.LevelSeconds .. " (m,s)"
             else
-               vars.LevelDuration = vars.LevelSeconds .. " second(s)"
+               vars.LevelDuration = vars.LevelSeconds .. "s"
             end
 
             TrackerLabel11:Set("Time To Next Level: " .. vars.LevelDuration)
@@ -1691,7 +1696,7 @@ end)
 -- autoreoll until rarity
 task.spawn(function()
    while task.wait(0.1) do
-      local PetGUI = vars.GameGUI.Pets
+      local PetGUI = GameGUI.Pets
       if PetGUI and vars.AutoReroll == true then
          if vars.SelectedPet and vars.SelectedPet > 0 then
             if vars.DeletePetLockTimer > 0 then 
