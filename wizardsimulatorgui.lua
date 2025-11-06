@@ -41,6 +41,7 @@ local vars = {
    HomeTPTimer = 0,
    LocationTPBlack = false,
    LocationTPTimer = 0,
+   NoStop = false,
    SelectedQuest = "LJ:1",
    AutoQuestToggle = false,
    HPot = nil,
@@ -87,9 +88,6 @@ local vars = {
    JumpPowerToggleOld = false,
    JumpPowerToggle = false,
    JumpPower = 50,
-   NoSlow = false,
-   ApplyNoSlow = false,
-   NoSlowTimer = 0,
    PlayerXPPercentage = nil,
    PlayerLevel = nil,
    PlayerTotalXP = nil,
@@ -494,11 +492,25 @@ local QOLToggle4 = QOLTab:CreateToggle({
 })
 
 local QOLToggle5 = QOLTab:CreateToggle({
-   Name = "Spell No Slow",
+   Name = "Spell No Wait",
    CurrentValue = false,
    Flag = "QOLToggle5",
    Callback = function(Value)
-      vars.NoSlow = Value
+      local actionhandler = require(game:GetService("Players").LocalPlayer.PlayerScripts.GameHandler.ActionHandler)
+      local stats = debug.getupvalue(actionhandler.CastSpell, 2)
+      for _, spell in stats do
+         spell.NoWait = Value
+      end
+      debug.setupvalue(actionhandler.CastSpell, 2, stats)
+   end,
+})
+
+local QOLToggle6 = QOLTab:CreateToggle({
+   Name = "No Stop",
+   CurrentValue = false,
+   Flag = "QOLToggle",
+   Callback = function(Value)
+      vars.NoStop = Value
    end,
 })
 
@@ -1549,35 +1561,6 @@ local function RefillMana()
    end
 end
 
--- no slow activation and timer
-game:GetService("ReplicatedStorage").Remote.CastSpell.OnClientEvent:Connect(function(plr)
-   if plr == Player then
-      vars.NoSlowTimer = 9
-   end
-end)
-task.spawn(function()
-   while task.wait(0.1) do
-      if vars.NoSlowTimer > 0 then
-         vars.ApplyNoSlow = true
-         vars.NoSlowTimer = vars.NoSlowTimer - 1
-         if vars.NoSlowTimer <= 0 then
-            vars.ApplyNoSlow = false
-         end
-         task.wait(1)
-      end
-   end
-end)
-
-
--- no slow management
-task.spawn(function()
-   while task.wait(0.01) do
-      if (vars.ApplyNoSlow == true) then
-         Humanoid.WalkSpeed = 16
-      end
-   end
-end)
-
 
 -- toggle and reset trackers
 ToggleGold = function()
@@ -1767,6 +1750,16 @@ task.spawn(function()
          end
       end
    end
+end)
+
+local hook;
+hook = hookmetamethod(game, "__newindex", function(self, ...)
+    local args = {...}
+    if vars.NoStop and self == Humanoid and args[1] == "WalkSpeed" and args[2] == 0 then
+         return
+    end
+
+   return hook(self, ...)
 end)
 
 print("[WSG] Loaded!")
